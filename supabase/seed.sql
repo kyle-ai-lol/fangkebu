@@ -1,0 +1,1 @@
+-- 示範資料用 TypeScript 產生（日期要相對今天）：npm run db:seed

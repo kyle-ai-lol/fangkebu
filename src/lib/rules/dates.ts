@@ -85,3 +85,15 @@ export function mdToYmd(month: number, day: number | undefined, today: Ymd): Ymd
   const diff = daysBetween(today, thisYear);
   return diff !== null && diff <= -60 ? onYear(year + 1) : thisYear;
 }
+
+/** 追蹤紀錄的時間 → 9/19 14:05（台灣時間） */
+export function fmtStamp(instant: Date | string): string {
+  const t = toTaipei(instant);
+  return `${fmtMD(t.ymd)} ${t.hm}`;
+}
+
+/** 客戶簿「更新」欄：今天、昨天、3 天前 */
+export function agoLabel(instant: Date | string, now: Date): string {
+  const d = Math.floor((now.getTime() - new Date(instant).getTime()) / DAY_MS);
+  return d <= 0 ? "今天" : d === 1 ? "昨天" : `${d} 天前`;
+}

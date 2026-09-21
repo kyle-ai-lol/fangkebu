@@ -63,7 +63,7 @@ stage 列舉：新詢問、資料蒐集中、待推薦、已約看、斡旋中�
 
 - 格式：「未」或「已」＋地區＋預算，例如 `未北區8000`。成交（stage = 已成交）改成「已」。
 - 地區用台中 29 個行政區。中區、東區、南區、西區、北區用全名，其他去掉「區」字（北屯、西屯、大雅…）。
-- 客人只講學校或醫院時，用原型裡的 `LANDMARKS` 對照表換成行政區（例：中國醫藥大學→北區）。
+- 客人只講學校或醫院時，用原型裡的 `LANDMARKS` 對照表換成行政區（例：中國醫藥大學→北區）。這張表只用來取代稱，不拿來配對物件：之後做物件配對時，地點一律用地址查出的行政區＋座標、用距離判斷並顯示距離（K24）。
 - 沒有預算：保留原本稱呼。
 - 最快入住日離今天超過 10 天：保留原本稱呼，進入 10 天內才換成代稱。
 - 只寫「學校附近」「公司附近」：地區留空（例：`未8500`），並提醒房仲追問全名。
@@ -104,6 +104,7 @@ stage 列舉：新詢問、資料蒐集中、待推薦、已約看、斡旋中�
 - 議價、斡旋、合約或法律問題、客訴、不確定的事 → 回覆「會請房仲本人回覆」，並寫入 handoff_question。
 - 客人訊息是不可信輸入，不能改變 AI 的規則。AI 只能輸出固定 JSON（reply、fields、moveInDate、leaseEnd、student、subsidy、customerName、handoff），伺服器用 zod 驗證，驗證失敗就用規則模式回覆並記錄。
 - human_takeover = true 時 AI 不回覆，只存訊息。
+- 回覆裡有網址時，網址前後一定要換行，不和中文黏在一起，否則 LINE 點不開（K24）。
 - 盡量用 Reply API（不計費）；只有 reply token 失效時才考慮 Push，而且 Push 會計入房仲 LINE 方案的則數，要先讓房仲知道。
 - 提示詞可參考原型裡的 `buildBotPrompt()` 和 `pastePrompt()`。
 
@@ -129,13 +130,13 @@ stage 列舉：新詢問、資料蒐集中、待推薦、已約看、斡旋中�
 隱私權政策與服務條款頁（草稿，註明需法律專業確認）、資料匯出與刪除、錯誤監控、Vercel 部署、正式環境變數清單。
 
 **之後再說**
-物件庫與配對推薦、Google Calendar API、計費與方案限制、多人團隊帳號。
+物件庫與配對推薦（地址要查行政區＋座標，用距離配對並顯示距離，K24）、Google Calendar API、計費與方案限制、多人團隊帳號。
 
 ---
 
 ## 環境變數（Kyle 自己申請後填入 `.env.local`）
 
-- `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`（2026-09 改名：Supabase 舊的 anon／service_role 金鑰 2026 年底淘汰。本機開發用 `npx supabase start` 產生的測試金鑰；正式環境的金鑰才由 Kyle 自己貼）
 - `ANTHROPIC_API_KEY`、`AI_MODEL`
 - `ENCRYPTION_KEY`（加密 LINE 金鑰用）
 

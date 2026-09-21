@@ -131,3 +131,10 @@ export function computeReminders({ clients, viewings, today, now }: ReminderInpu
 export function urgentCount(reminders: readonly Reminder[]): number {
   return reminders.filter((r) => r.level < 2).length;
 }
+
+/** 客戶卡上「會在幾月幾號提醒你」那一行 */
+export function leaseReminderLine(c: Pick<Client, "leaseEnd" | "isStudent" | "needsSubsidy">): string {
+  const lead = leaseLeadDays(c.isStudent, c.needsSubsidy);
+  if (!c.leaseEnd || !isYmd(c.leaseEnd)) return "填入現租約到期日，系統會在到期前 10 天提醒你聯絡（學生或需租補提前 15 天）。";
+  return `會在 ${fmtMD(addDays(c.leaseEnd, -lead))} 提醒你聯絡客人（租約到期前 ${lead} 天${lead === 15 ? "，因為是學生或需租補" : ""}）。`;
+}
