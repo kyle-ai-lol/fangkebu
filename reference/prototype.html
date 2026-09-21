@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>房客簿｜把 LINE 對話整理成客戶卡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F5F1; --sheet:#FFFFFF; --ink:#1B2B45; --ink-2:#51607A;
+  --rule:#CAD3CD; --rule-soft:#E3E9E4; --seal:#B3261E; --on-seal:#FFFFFF;
+  --marker:#F5C542; --marker-soft:#FBEBB3; --chat-bg:#DAE3EC;
+  --bubble-them:#FFFFFF; --bubble-ai:#C6EEB4; --ok:#2E7D4F; --focus:#2F6FD0;
+  --scrim:rgba(15,22,35,.45);
+  --hand:"LXGW WenKai TC","Kaiti TC","BiauKai","DFKai-SB","KaiTi",serif;
+  --sans:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131C2C; --sheet:#1B2639; --ink:#E4EAE6; --ink-2:#A5B1C0;
+    --rule:#34425B; --rule-soft:#26324A; --seal:#E5675C; --on-seal:#1B0E0C;
+    --marker:#E2B43A; --marker-soft:#4A3E1C; --chat-bg:#1E2A3F;
+    --bubble-them:#2A3854; --bubble-ai:#2C5836; --ok:#72D39C; --focus:#86B6FF;
+    --scrim:rgba(0,0,0,.55); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131C2C; --sheet:#1B2639; --ink:#E4EAE6; --ink-2:#A5B1C0;
+  --rule:#34425B; --rule-soft:#26324A; --seal:#E5675C; --on-seal:#1B0E0C;
+  --marker:#E2B43A; --marker-soft:#4A3E1C; --chat-bg:#1E2A3F;
+  --bubble-them:#2A3854; --bubble-ai:#2C5836; --ok:#72D39C; --focus:#86B6FF;
+  --scrim:rgba(0,0,0,.55); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;overflow-x:hidden}
+img,svg{max-width:100%}
+h1,h2,h3{line-height:1.3;margin:0}
+p{margin:0 0 .8em}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.fine{font-size:.85rem;color:var(--ink-2)}
+.warn{font-size:.88rem;background:var(--marker-soft);border-left:4px solid var(--marker);padding:.5rem .75rem;border-radius:0 4px 4px 0;margin:.6rem 0}
+
+/* buttons */
+.btn{font:inherit;font-weight:500;font-size:.95rem;border-radius:8px;padding:.55em 1.1em;min-height:44px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.4em;text-decoration:none;white-space:nowrap}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.ghost{border-color:var(--rule)}
+.btn.danger{border-color:var(--seal);color:var(--seal)}
+.btn.small{min-height:36px;padding:.3em .8em;font-size:.85rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:not(:disabled):hover{filter:brightness(1.08)}
+.cta-row{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.4rem 0 .8rem}
+
+/* seal stamp */
+.stamp{font-family:var(--hand);font-weight:700;color:var(--seal);border:2px solid var(--seal);border-radius:4px;padding:.02em .45em;display:inline-block;transform:rotate(-3deg);box-shadow:inset 0 0 0 2px var(--sheet),inset 0 0 0 3px var(--seal);white-space:nowrap;line-height:1.45;background:var(--sheet)}
+.stamp.raw{color:var(--ink-2);border:1.5px dashed var(--ink-2);box-shadow:none;transform:none;font-weight:400}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.6rem clamp(1rem,3vw,2rem)}
+.brand{font-family:var(--hand);font-weight:700;font-size:1.35rem;display:inline-flex;align-items:center;gap:.45rem;background:none;border:0;color:var(--ink);cursor:pointer;padding:0}
+.brand .mark{display:inline-grid;place-items:center;width:1.7rem;height:1.7rem;background:var(--seal);color:var(--on-seal);border-radius:3px;font-size:.95rem}
+.topbar .spacer{flex:1}
+.who{font-size:.9rem;color:var(--ink-2)}
+
+/* landing */
+.wrap{max-width:1140px;margin:0 auto;padding:0 clamp(1rem,3vw,2rem)}
+.hero{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(2rem,5vw,4rem);align-items:center;padding:clamp(2.5rem,7vw,5rem) 0 clamp(2rem,5vw,3.5rem)}
+.hero h1{font-family:var(--hand);font-weight:700;font-size:clamp(2.1rem,4.4vw,3.4rem);line-height:1.28;margin-bottom:1.1rem;max-width:14em}
+.lede{font-size:1.08rem;color:var(--ink-2);max-width:32em}
+.hero-demo{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:1rem;align-items:start}
+.demo-chat{background:var(--chat-bg);border-radius:22px;padding:.8rem .75rem 1rem;display:flex;flex-direction:column;gap:.5rem;min-height:360px;border:1px solid var(--rule)}
+.demo-top{font-size:.8rem;color:var(--ink-2);text-align:center;margin-bottom:.3rem}
+.hero-demo [data-t]{transition:opacity .35s ease,transform .35s ease}
+.hero-demo .msg[data-t]{opacity:0;transform:translateY(8px)}
+.hero-demo .msg[data-t].on{opacity:1;transform:none}
+.demo-card .frow{grid-template-columns:1.3em 4.6em minmax(0,1fr)}
+.demo-card .frow .fval{min-height:1.5em;white-space:nowrap;font-size:1.05rem}
+.demo-card .frow.fill .v{opacity:0;transition:opacity .3s ease}
+.demo-card .frow.fill.on .v{opacity:1}
+.demo-card .frow.fill.on .fval{background:none}
+.demo-stamp{opacity:0;transform:scale(1.7) rotate(-12deg)}
+.demo-stamp.on{opacity:1;transform:scale(1) rotate(-4deg);transition:transform .28s cubic-bezier(.2,1.6,.4,1),opacity .15s}
+.demo-miss{opacity:0}
+.demo-miss.on{opacity:1}
+.replay{margin-top:.6rem}
+.section{padding:clamp(2.5rem,6vw,4.5rem) 0;border-top:1px solid var(--rule)}
+.section h2{font-family:var(--hand);font-weight:700;font-size:clamp(1.6rem,3vw,2.2rem);margin-bottom:1.6rem;max-width:20em}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink)}
+.steps li{padding:1rem 1.2rem 0 0}
+.steps li + li{padding-left:1.2rem;border-left:1px solid var(--rule)}
+.steps .n{font-family:var(--hand);font-size:2.2rem;color:var(--seal);line-height:1}
+.steps h3{font-size:1.05rem;margin:.5rem 0 .4rem}
+.steps p{font-size:.93rem;color:var(--ink-2)}
+.cmp{width:100%;border-collapse:collapse;background:var(--sheet);border:1px solid var(--rule)}
+.cmp th,.cmp td{text-align:left;vertical-align:top;padding:.9rem 1.1rem;border-bottom:1px solid var(--rule-soft);font-size:.95rem}
+.cmp th{font-size:.85rem;color:var(--ink-2);font-weight:500;background:var(--paper)}
+.cmp td:first-child{color:var(--ink-2);width:46%}
+.faq details{border-bottom:1px solid var(--rule);padding:.9rem 0}
+.faq summary{cursor:pointer;font-weight:500;font-size:1.02rem}
+.faq details p{margin:.6rem 0 0;color:var(--ink-2);max-width:40em}
+.foot{padding:2rem clamp(1rem,3vw,2rem) 3rem;border-top:1px solid var(--rule);font-size:.85rem;color:var(--ink-2);text-align:left;max-width:1140px;margin:0 auto}
+
+/* paper form */
+.paper{background:var(--sheet);border:1px solid var(--rule);border-radius:3px;padding:1rem 1.15rem}
+.cv-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;flex-wrap:wrap}
+.cv-head .stamp{font-size:1.3rem}
+.frow{display:grid;grid-template-columns:1.5em minmax(5.5em,8.5em) minmax(0,1fr);align-items:baseline;gap:.45rem;border-bottom:1px dashed var(--rule);padding:.3rem 0}
+.frow:last-child{border-bottom:0}
+.fnum{color:var(--ink-2);font-size:.78rem;font-variant-numeric:tabular-nums}
+.flabel{font-size:.82rem;color:var(--ink-2);line-height:1.35}
+.fval{font-family:var(--hand);font-size:1.1rem;line-height:1.4;overflow-wrap:anywhere}
+.fval.empty{font-family:var(--sans);font-size:.8rem;color:var(--ink-2);background:linear-gradient(transparent 58%,var(--marker-soft) 58%)}
+.demo-card .fval{background:linear-gradient(transparent 58%,var(--marker-soft) 58%)}
+.miss{font-size:.8rem;background:var(--marker-soft);padding:.1em .55em;border-radius:3px;white-space:nowrap}
+.miss.ok{background:none;color:var(--ok)}
+
+/* signup & settings forms */
+.form-page{max-width:640px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1rem,3vw,2rem) 4rem}
+.form-page h1{font-family:var(--hand);font-size:clamp(1.8rem,4vw,2.4rem);margin-bottom:.6rem}
+label.lb{display:block;font-size:.88rem;color:var(--ink-2);margin:1rem 0 .3rem}
+.inp,select.inp,textarea.inp{font:inherit;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:.55rem .7rem;width:100%;min-height:44px}
+textarea.inp{line-height:1.6;resize:vertical}
+fieldset{border:0;padding:0;margin:1rem 0 0}
+legend{font-size:.88rem;color:var(--ink-2);margin-bottom:.4rem;padding:0}
+.dchips{display:flex;flex-wrap:wrap;gap:.35rem}
+.dchip{position:relative}
+.dchip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.dchip span{display:inline-block;border:1px solid var(--rule);border-radius:999px;padding:.2rem .75rem;font-size:.85rem;background:var(--sheet)}
+.dchip input:checked + span{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.dchip input:focus-visible + span{outline:3px solid var(--focus);outline-offset:2px}
+.check{display:inline-flex;align-items:center;gap:.4rem;margin-right:1.2rem;font-size:.95rem;min-height:44px;cursor:pointer}
+.check input{width:1.1rem;height:1.1rem;accent-color:var(--ink)}
+.err{color:var(--seal);font-size:.88rem;margin-top:.4rem}
+
+/* app shell */
+.tabs{display:flex;gap:.15rem;overflow-x:auto;scrollbar-width:none}
+.tab{border:0;background:none;font:inherit;color:var(--ink-2);padding:.45rem .8rem;border-radius:6px;cursor:pointer;white-space:nowrap;min-height:40px}
+.tab[aria-current="page"]{color:var(--ink);background:var(--sheet);box-shadow:inset 0 -2px 0 var(--seal)}
+.badge{display:inline-block;background:var(--seal);color:var(--on-seal);border-radius:999px;font-size:.72rem;padding:0 .45em;margin-left:.3em;line-height:1.5;vertical-align:1px}
+.app-main{max-width:1180px;margin:0 auto;padding:1.4rem clamp(1rem,3vw,2rem) 4rem}
+.tab-title{font-family:var(--hand);font-size:1.9rem;font-weight:700}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:1rem}
+.tools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.tools .inp{width:14rem;min-height:40px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--sheet)}
+.seg button{font:inherit;font-size:.88rem;border:0;background:none;color:var(--ink-2);padding:.4rem .75rem;cursor:pointer;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* ledger */
+.ledger{background:var(--sheet);border:1px solid var(--rule);border-radius:3px}
+.lhead,.lrow{display:grid;grid-template-columns:minmax(9.5rem,1.2fr) minmax(0,2.2fr) 6.5rem 5.5rem 4.5rem;gap:.9rem;align-items:center;padding:.65rem 1rem}
+.lhead{font-size:.8rem;color:var(--ink-2);border-bottom:1px solid var(--rule)}
+.lrow{width:100%;text-align:left;font:inherit;color:inherit;background:none;border:0;border-bottom:1px solid var(--rule-soft);cursor:pointer}
+.lrow:last-child{border-bottom:0}
+.lrow:hover{background:var(--paper)}
+.lrow .stamp{font-size:1.05rem}
+.lsum{font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage{font-size:.8rem;border:1px solid var(--rule);border-radius:999px;padding:.05em .6em;white-space:nowrap;justify-self:start}
+.stage.closed{color:var(--ink-2);border-style:dashed}
+.lago{font-size:.8rem;color:var(--ink-2)}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);gap:.75rem;overflow-x:auto;padding-bottom:.6rem}
+.col{background:var(--sheet);border:1px solid var(--rule);border-radius:3px;padding:.7rem;min-height:220px}
+.col h3{font-size:.92rem;display:flex;justify-content:space-between;margin-bottom:.6rem;color:var(--ink-2);font-weight:500}
+.ticket{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--rule-soft);border-radius:3px;padding:.55rem .6rem;margin-bottom:.5rem;font:inherit;color:inherit;cursor:pointer}
+.ticket .stamp{font-size:1rem;margin-bottom:.3rem}
+.ticket p{font-size:.82rem;color:var(--ink-2);margin:0}
+.blank{background:var(--sheet);border:1px dashed var(--rule);border-radius:3px;padding:2rem 1.5rem}
+.blank .t{font-family:var(--hand);font-size:1.4rem;margin-bottom:.4rem}
+
+/* detail drawer */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:40}
+.detail{position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);background:var(--paper);z-index:41;overflow-y:auto;box-shadow:-10px 0 28px rgba(0,0,0,.18)}
+.d-head{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:1rem 1.2rem;z-index:1}
+.d-title .stamp{font-size:1.6rem}
+.d-meta{font-size:.85rem;color:var(--ink-2);margin:.5rem 0 0}
+.d-body{padding:1rem 1.2rem 3rem}
+.d-sec{font-size:1rem;font-weight:700;margin:1.6rem 0 .6rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.2rem .9rem}
+.form .frow{grid-template-columns:1.5em minmax(5.5em,9em) minmax(0,1fr);align-items:center}
+.fin{font-family:var(--hand);font-size:1.1rem;color:var(--ink);background:transparent;border:0;border-radius:3px;padding:.3rem .35rem;width:100%;min-height:38px}
+.fin::placeholder{font-family:var(--sans);font-size:.8rem;color:var(--ink-2);opacity:.8}
+.fin.empty{background:linear-gradient(transparent 60%,var(--marker-soft) 60%)}
+.fin:focus{background:var(--paper)}
+.vlist,.log{list-style:none;margin:0 0 .6rem;padding:0}
+.vlist li{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .7rem;padding:.55rem 0;border-bottom:1px dashed var(--rule)}
+.vwhen{font-family:var(--hand);font-size:1.1rem}
+.vaddr{flex:1;min-width:8rem;font-size:.92rem}
+.log li{display:grid;grid-template-columns:5.5rem 1fr;gap:.6rem;padding:.35rem 0;border-bottom:1px dashed var(--rule-soft);font-size:.9rem}
+.log time{color:var(--ink-2);font-size:.8rem;font-variant-numeric:tabular-nums}
+.transcript{font-size:.88rem;background:var(--sheet);border:1px solid var(--rule);border-radius:3px;padding:.3rem .8rem;margin-top:.6rem}
+.transcript summary{cursor:pointer;padding:.4rem 0;font-weight:500}
+.transcript p{margin:.25rem 0}
+.d-hr{border:0;border-top:1px solid var(--rule);margin:2rem 0 1rem}
+
+/* bot */
+.bot-wrap{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:1.6rem;align-items:start;margin-top:1rem}
+.phone{background:var(--chat-bg);border-radius:24px;overflow:hidden;border:1px solid var(--rule);display:flex;flex-direction:column;height:min(640px,78vh)}
+.phone-top{background:var(--sheet);padding:.65rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem;border-bottom:1px solid var(--rule);font-weight:500;font-size:.92rem}
+.pill{font-size:.72rem;font-weight:500;border:1px solid var(--rule);border-radius:999px;padding:.05em .6em;white-space:nowrap;color:var(--ink-2)}
+.pill.ai{border-color:var(--ok);color:var(--ok)}
+.chatlog{flex:1;overflow-y:auto;padding:1rem .8rem;display:flex;flex-direction:column;gap:.55rem}
+.msg{max-width:80%;padding:.5rem .85rem;border-radius:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font-size:.95rem}
+.msg.them{align-self:flex-start;background:var(--bubble-them);border-top-left-radius:6px}
+.msg.ai{align-self:flex-end;background:var(--bubble-ai);border-top-right-radius:6px}
+.sys{align-self:center;font-size:.76rem;background:var(--sheet);border:1px solid var(--rule);border-radius:999px;padding:.1rem .75rem;color:var(--ink-2);margin:0;text-align:center}
+.typing{color:var(--ink-2);font-size:.85rem}
+.suggest{display:flex;gap:.4rem;overflow-x:auto;padding:.45rem .6rem;scrollbar-width:none}
+.chip{white-space:nowrap;font:inherit;font-size:.82rem;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:999px;padding:.25rem .75rem;cursor:pointer;min-height:34px}
+.composer{display:flex;gap:.5rem;padding:.6rem;background:var(--sheet);border-top:1px solid var(--rule);align-items:flex-end}
+.composer textarea{flex:1;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:18px;padding:.5rem .85rem;resize:none;min-height:44px;max-height:120px;line-height:1.5}
+.live-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem}
+.live-head h2{font-size:1.1rem}
+
+/* reminders */
+.rlist{background:var(--sheet);border:1px solid var(--rule);border-radius:3px;margin-top:1rem}
+.ritem{display:grid;grid-template-columns:4.6rem minmax(0,1fr) auto;gap:1rem;padding:.8rem 1rem;border-bottom:1px solid var(--rule-soft);align-items:center}
+.ritem:last-child{border-bottom:0}
+.rdate{font-family:var(--hand);font-size:1.25rem;line-height:1.2}
+.ritem.urgent .rdate{color:var(--seal)}
+.rtext{font-size:.95rem}
+.rwhy{font-size:.8rem;color:var(--ink-2)}
+.set{margin-top:1.2rem}
+.set h2{font-size:1.1rem;margin-bottom:.4rem}
+
+#toast{position:fixed;left:50%;bottom:1.5rem;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:.6rem 1.1rem;border-radius:8px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;max-width:calc(100% - 2rem)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr 1fr}
+  .steps li:nth-child(3){padding-left:0;border-left:0}
+  .steps li{padding-bottom:1.2rem}
+  .bot-wrap{grid-template-columns:1fr}
+  .phone{height:540px}
+}
+@media (max-width:720px){
+  .lhead{display:none}
+  .lrow{grid-template-columns:minmax(0,1fr) auto;gap:.3rem .8rem}
+  .lrow .lsum{grid-column:1 / -1;white-space:normal}
+  .lrow .lmiss{grid-row:1;grid-column:2}
+  .lrow .stage,.lrow .lago{font-size:.75rem}
+  .tools .inp{width:100%}
+  .grid2{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .hero-demo{grid-template-columns:1fr}
+  .demo-chat{min-height:0}
+  .steps{grid-template-columns:1fr}
+  .steps li + li{padding-left:0;border-left:0}
+  .cmp td:first-child{width:auto}
+  .ritem{grid-template-columns:3.8rem minmax(0,1fr)}
+  .ritem .btn{grid-column:2;justify-self:start}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="detailRoot"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+var $ = function(s, r){ return (r || document).querySelector(s); };
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+var STORE_KEY = 'fangkebu-proto-v1';
+var DAY = 86400000;
+var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+var DISTRICTS = ['中區','東區','南區','西區','北區','北屯區','西屯區','南屯區','太平區','大里區','霧峰區','烏日區','豐原區','后里區','石岡區','東勢區','和平區','新社區','潭子區','大雅區','神岡區','大肚區','沙鹿區','龍井區','梧棲區','清水區','大甲區','外埔區','大安區'];
+var CORE5 = ['中區','東區','南區','西區','北區'];
+var STAGES = ['新詢問','資料蒐集中','待推薦','已約看','斡旋中','已成交','暫停'];
+var CLOSED = ['已成交','暫停'];
+var FIELDS = [
+  {k:'people', n:1, label:'入住人數', s:'人數', ph:'例：1 人'},
+  {k:'moveIn', n:2, label:'最快入住時間', s:'入住時間', ph:'例：10/15、月底'},
+  {k:'job', n:3, label:'職業身份', s:'職業', ph:'例：學生、工程師'},
+  {k:'smoke', n:4, label:'有無抽菸', s:'抽菸', ph:'有／無'},
+  {k:'pet', n:5, label:'有無寵物', s:'寵物', ph:'例：一隻貓'},
+  {k:'phone', n:6, label:'電話號碼', s:'電話', ph:'09xx-xxx-xxx'},
+  {k:'gender', n:7, label:'性別', s:'性別', ph:''},
+  {k:'age', n:8, label:'年齡', s:'年齡', ph:''},
+  {k:'area', n:9, label:'希望居住行政區或學校／公司', s:'地區', ph:'例：北區，或學校全名'},
+  {k:'budget', n:10, label:'預算金額', s:'預算', ph:'例：8000'},
+  {k:'transport', n:11, label:'交通工具', s:'交通', ph:'例：機車'},
+  {k:'commute', n:12, label:'騎車幾分鐘到第 9 項地點', s:'通勤時間', ph:'例：10 分鐘'}
+];
+var DEFAULT_KB = [
+  '問：服務費怎麼算？',
+  '答：（示範）看房和諮詢都免費，成交才收服務費，金額簽約前會先說清楚。',
+  '問：什麼時候可以看房？',
+  '答：（示範）每天 10:00 到 21:00 都可以約，最好前一天預約。',
+  '問：簽約要準備什麼？',
+  '答：（示範）身分證、押金和第一個月租金。學生通常要準備保證人資料。',
+  '問：可以申請租金補貼嗎？',
+  '答：（示範）要看房東是否同意報稅，找房時先說需要租補，會優先挑可以的物件。',
+  '問：可以養寵物嗎？',
+  '答：（示範）有些物件可以，先告訴我是貓還是狗、幾隻，我幫你篩。'
+].join('\n');
+
+/* ---------- time ---------- */
+function z(n){ return String(n).padStart(2,'0'); }
+function ymd(d){ return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()); }
+function todayStr(){ return ymd(new Date()); }
+function isYmd(s){ return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(parseYmd(s)); }
+function parseYmd(s){ var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? new Date(+m[1], +m[2]-1, +m[3]) : null; }
+function daysFromToday(s){ var d = parseYmd(s); if(!d) return null; return Math.round((d - parseYmd(todayStr())) / DAY); }
+function addDays(s, n){ var d = parseYmd(s); d.setDate(d.getDate()+n); return ymd(d); }
+function fmtMD(s){ var d = parseYmd(s); return d ? (d.getMonth()+1)+'/'+d.getDate() : ''; }
+function fmtTs(t){ var d = new Date(t); return (d.getMonth()+1)+'/'+d.getDate()+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+function fmtWhen(w){ var d = new Date(w); if(isNaN(d)) return w; var wd = '日一二三四五六'[d.getDay()]; return (d.getMonth()+1)+'/'+d.getDate()+'（'+wd+'）'+z(d.getHours())+':'+z(d.getMinutes()); }
+function ago(ts){ var d = Math.floor((Date.now()-ts)/DAY); return d <= 0 ? '今天' : d === 1 ? '昨天' : d+' 天前'; }
+function mdToYmd(m, d){
+  var now = new Date(); var y = now.getFullYear();
+  var dt = new Date(y, m-1, d || 1);
+  if(dt < new Date(now.getTime() - 60*DAY)) dt = new Date(y+1, m-1, d || 1);
+  return ymd(dt);
+}
+
+/* ---------- storage ---------- */
+var storageOk = true;
+function load(){ try{ var raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+var S = load() || { profile:null, kb:DEFAULT_KB, clients:[] };
+if(typeof S.kb !== 'string') S.kb = DEFAULT_KB;
+if(!Array.isArray(S.clients)) S.clients = [];
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }
+  catch(e){ if(storageOk){ storageOk = false; toast('這個瀏覽器不能儲存資料，關掉頁面後內容會消失'); } }
+}
+var ui = { view: S.profile ? 'app' : 'landing', tab:'clients', filter:'未結案', layout:'list', q:'', openId:null, bot:null, paste:null, aiState:'checking' };
+
+/* ---------- client model ---------- */
+function uid(p){ return (p||'c') + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function emptyFields(){ var o = {}; FIELDS.forEach(function(f){ o[f.k] = ''; }); return o; }
+function newClient(p){
+  p = p || {}; var now = Date.now(); var src = p.source || '手動';
+  var c = {
+    id: uid('c'), name: p.name || '', fields: Object.assign(emptyFields(), p.fields || {}),
+    moveInDate: p.moveInDate || '', leaseEnd: p.leaseEnd || '', student: !!p.student, subsidy: !!p.subsidy,
+    stage: p.stage || '新詢問', source: src, handoff: p.handoff || '', chat: p.chat || null,
+    log: p.log || [{ t: now, text: '建立客戶卡（' + src + '）' }], viewings: p.viewings || [],
+    createdAt: now, updatedAt: p.updatedAt || now
+  };
+  if(/學生/.test(c.fields.job)) c.student = true;
+  return c;
+}
+function getClient(id){ for(var i=0;i<S.clients.length;i++){ if(S.clients[i].id === id) return S.clients[i]; } return null; }
+function touch(c){ c.updatedAt = Date.now(); save(); }
+function val(c, k){ return String((c.fields || {})[k] || '').trim(); }
+function missingOf(c){ return FIELDS.filter(function(f){ return !val(c, f.k); }); }
+
+function parseBudget(v){
+  var s = String(v == null ? '' : v).replace(/,/g,'').replace(/\s+/g,'');
+  var m = s.match(/(\d+(?:\.\d+)?)萬(\d)?/);
+  if(m) return Math.round(parseFloat(m[1])*10000 + (m[2] ? +m[2]*1000 : 0));
+  m = s.match(/(\d+(?:\.\d+)?)[千kK]/);
+  if(m) return Math.round(parseFloat(m[1])*1000);
+  m = s.match(/\d{4,6}/);
+  return m ? +m[0] : 0;
+}
+function detectDistricts(text){
+  if(!text) return [];
+  var t = String(text); var found = [];
+  DISTRICTS.forEach(function(d){
+    var key = CORE5.indexOf(d) >= 0 ? d : d.replace(/區$/,'');
+    var i = t.indexOf(key);
+    if(i >= 0) found.push({ d:d, i:i });
+  });
+  found.sort(function(a,b){ return a.i - b.i; });
+  var out = found.map(function(x){ return x.d; });
+  LANDMARKS.forEach(function(l){ if(l[0].test(t) && out.indexOf(l[1]) < 0) out.push(l[1]); });
+  return out;
+}
+/* 常見學校、醫院對應的行政區：客人只講學校名時，也能照行政區取代稱 */
+var LANDMARKS = [
+  [/中國醫/, '北區'], [/中山醫/, '南區'], [/逢甲/, '西屯區'], [/東海大學|東海/, '西屯區'], [/靜宜/, '沙鹿區'], [/弘光/, '沙鹿區'],
+  [/中興大學|興大/, '南區'], [/朝陽科/, '霧峰區'], [/亞洲大學|亞大/, '霧峰區'], [/臺中科技大學|台中科技大學|臺中科大|台中科大/, '北區'],
+  [/勤益/, '太平區'], [/榮總/, '西屯區'], [/修平/, '大里區'], [/嶺東/, '南屯區'], [/僑光/, '西屯區'], [/臺中教育大學|台中教育大學|中教大/, '西區'], [/中台科/, '北屯區']
+];
+function districtShort(d){ return CORE5.indexOf(d) >= 0 ? d : d.replace(/區$/,''); }
+var INST_RE = /(大學|科大|醫大|學院|專科|高中|國中|中學|醫院|榮總|園區|公司|科學園區|中科)/;
+function isVagueArea(a){ a = String(a || ''); return /附近/.test(a) && !detectDistricts(a).length && !INST_RE.test(a.replace(/公司附近/,'')); }
+function vagueArea(c){ return isVagueArea(val(c,'area')); }
+function shortPlace(a){ a = String(a || '').split(/[、,，\/\s]/)[0] || ''; return a.slice(0, 6); }
+
+function baseAlias(c){
+  var b = parseBudget(val(c,'budget')); var nm = c.name || '';
+  if(!b) return { text:nm, raw:true, why:'還沒有預算，先用原本的稱呼' };
+  var md = c.moveInDate ? daysFromToday(c.moveInDate) : null;
+  if(md !== null && md > 10) return { text: nm || ('預算' + b), raw:true, why:'離入住還有 ' + md + ' 天，進入 10 天找房期再換成代稱' };
+  var area = val(c,'area'); var ds = detectDistricts(area);
+  var place = ds.length ? districtShort(ds[0]) : (isVagueArea(area) ? '' : shortPlace(area));
+  return { text: (c.stage === '已成交' ? '已' : '未') + place + b, raw:false };
+}
+function computeAliases(){
+  var map = {}; var groups = {};
+  S.clients.forEach(function(c){
+    var a = baseAlias(c); map[c.id] = a;
+    if(!a.raw){ (groups[a.text] = groups[a.text] || []).push(c); }
+  });
+  Object.keys(groups).forEach(function(txt){
+    var arr = groups[txt]; if(arr.length < 2) return;
+    var used = {};
+    arr.forEach(function(c, i){
+      var tag = (val(c,'job') || c.name || '').replace(/\s/g,'').slice(0,2) || String(i+1);
+      var t = txt + '-' + tag, k = 2;
+      while(used[t]){ t = txt + '-' + tag + k; k++; }
+      used[t] = 1;
+      map[c.id] = { text:t, raw:false, dup:true };
+    });
+  });
+  return map;
+}
+function displayName(a){ return a.text || '未命名客人'; }
+function summary(c){
+  var parts = []; var area = val(c,'area'); var ds = detectDistricts(area);
+  if(ds.length) parts.push(ds.map(districtShort).join('、')); else if(area) parts.push(area);
+  var b = parseBudget(val(c,'budget')); if(b) parts.push(b.toLocaleString('zh-TW') + ' 元');
+  if(val(c,'people')) parts.push(val(c,'people'));
+  if(val(c,'moveIn')) parts.push(val(c,'moveIn') + ' 入住');
+  var pet = val(c,'pet'); if(pet && !/^(無|沒有|否|不)$/.test(pet)) parts.push('寵物：' + pet);
+  return parts.join('，') || '條件還沒問';
+}
+function agentName(){ return (S.profile && S.profile.name) || '房仲'; }
+function botName(){ return (S.profile && S.profile.bot) || '小幫手'; }
+
+/* ---------- reminders ---------- */
+function computeReminders(){
+  var A = computeAliases(); var out = [];
+  S.clients.forEach(function(c){
+    if(CLOSED.indexOf(c.stage) >= 0) return;
+    var name = displayName(A[c.id]); var phone = val(c,'phone');
+    if(c.handoff) out.push({ cid:c.id, lv:0, key:-9, date:'AI 轉交', text: name + '：客人問了需要你本人回覆的問題', why:'「' + c.handoff.slice(0,40) + '」' });
+    if(isYmd(c.leaseEnd)){
+      var lead = (c.student || c.subsidy) ? 15 : 10; var rd = addDays(c.leaseEnd, -lead); var diff = daysFromToday(rd);
+      if(diff <= 14){
+        var txt = diff < 0 ? '已經晚了 ' + (-diff) + ' 天，該聯絡問找房需求' : diff === 0 ? '今天該聯絡問找房需求' : diff + ' 天後該聯絡問找房需求';
+        out.push({ cid:c.id, lv: diff <= 0 ? 0 : 1, key:diff, date: fmtMD(rd), text: name + '：租約 ' + fmtMD(c.leaseEnd) + ' 到期，' + txt, why: lead === 15 ? '學生或需租補，到期前 15 天提醒' : '到期前 10 天提醒' });
+      }
+    }
+    var soonView = false;
+    c.viewings.forEach(function(v){
+      var diff = daysFromToday(String(v.when).slice(0,10));
+      if(diff === 0 || diff === 1){
+        soonView = true;
+        out.push({ cid:c.id, lv: diff === 0 ? 0 : 1, key: diff - .5, date: fmtMD(String(v.when).slice(0,10)), text: name + '：' + (diff === 0 ? '今天' : '明天') + ' ' + String(v.when).slice(11,16) + ' 帶看 ' + v.address, why: phone ? '客人電話 ' + phone : '還沒有電話，帶看前先跟客人要' });
+      }
+    });
+    if(!soonView && (c.stage === '已約看' || c.viewings.length) && !phone) out.push({ cid:c.id, lv:1, key:.3, date:'待辦', text: name + '：已約看，但還沒有電話', why:'約看前一定要拿到電話' });
+    if(vagueArea(c)) out.push({ cid:c.id, lv:2, key:5, date:'待問', text: name + '：第 9 項只寫「' + val(c,'area') + '」', why:'問清楚學校或公司全名，才對得到行政區' });
+    var idle = Math.floor((Date.now() - c.updatedAt) / DAY);
+    if(idle >= 3) out.push({ cid:c.id, lv:2, key:6, date:'追蹤', text: name + '：已經 ' + idle + ' 天沒更新進度', why:'還沒結案，主動問一下客人找得如何' });
+  });
+  return out.sort(function(a,b){ return a.lv - b.lv || a.key - b.key; });
+}
+function urgentCount(){ return computeReminders().filter(function(r){ return r.lv < 2; }).length; }
+
+/* ---------- google calendar ---------- */
+function gcalLink(c, a, v){
+  var d = new Date(v.when); var e = new Date(d.getTime() + 3600000);
+  function f(x){ return x.getFullYear()+z(x.getMonth()+1)+z(x.getDate())+'T'+z(x.getHours())+z(x.getMinutes())+'00'; }
+  var phone = val(c,'phone') || '未提供電話';
+  var p = new URLSearchParams({
+    action:'TEMPLATE', text:'帶看｜' + displayName(a) + '｜' + phone, dates: f(d) + '/' + f(e), ctz:'Asia/Taipei',
+    location: v.address || '', details: '客戶：' + displayName(a) + (c.name ? '（' + c.name + '）' : '') + '\n電話：' + phone + '\n條件：' + summary(c) + '\n\n由房客簿建立'
+  });
+  return 'https://calendar.google.com/calendar/render?' + p.toString();
+}
+
+/* ---------- toast ---------- */
+var toastTimer = null;
+function toast(msg){ var t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2800); }
+
+/* ---------- AI (sample capability) ---------- */
+var samplePromise = null, aiDisabled = false;
+var PERM = ['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'];
+function getSample(){
+  if(aiDisabled) return Promise.resolve(null);
+  if(!window.claude || typeof window.claude.use !== 'function') return Promise.resolve(null);
+  if(!samplePromise) samplePromise = window.claude.use('sample').catch(function(){ return null; });
+  return samplePromise;
+}
+function aiErrorCopy(code){
+  if(PERM.indexOf(code) >= 0) return 'AI 沒有開放給這個頁面，改用規則模式整理';
+  switch(code){
+    case 'rate_limited': return 'AI 用得太頻繁，稍等一下再試';
+    case 'session_expired': return '登入過期，重新登入 Claude 後再試';
+    case 'invalid_json': return 'AI 回覆的格式不對，這次改用規則模式';
+    case 'refused': return 'AI 沒有處理這段內容，換個說法再試';
+    case 'prompt_too_large': return '內容太長，刪短一點再試';
+    default: return 'AI 暫時連不上，這次改用規則模式';
+  }
+}
+function normalizeAI(r){
+  var o = { name:'', fields:{}, moveInDate:'', leaseEnd:'', student:null, subsidy:null, summary:'', reply:'', handoff:false };
+  if(!r || typeof r !== 'object') return o;
+  o.reply = typeof r.reply === 'string' ? r.reply.trim().slice(0, 400) : '';
+  o.handoff = r.handoff === true;
+  o.name = typeof r.customerName === 'string' ? r.customerName.trim().slice(0, 20) : '';
+  var f = (r.fields && typeof r.fields === 'object') ? r.fields : {};
+  FIELDS.forEach(function(x){
+    var v = f[x.k]; if(v === null || v === undefined) return;
+    var s = String(v).trim(); if(!s) return;
+    if(x.k === 'budget'){ var b = parseBudget(s); if(!b) return; s = String(b); }
+    o.fields[x.k] = s.slice(0, 60);
+  });
+  if(isYmd(r.moveInDate)) o.moveInDate = r.moveInDate;
+  if(isYmd(r.leaseEnd)) o.leaseEnd = r.leaseEnd;
+  if(typeof r.student === 'boolean') o.student = r.student;
+  if(typeof r.subsidy === 'boolean') o.subsidy = r.subsidy;
+  o.summary = typeof r.summary === 'string' ? r.summary.trim().slice(0, 200) : '';
+  return o;
+}
+function applyTo(c, o, overwrite){
+  Object.keys(o.fields || {}).forEach(function(k){ if(overwrite || !val(c,k)) c.fields[k] = o.fields[k]; });
+  if(o.moveInDate && (overwrite || !c.moveInDate)) c.moveInDate = o.moveInDate;
+  if(o.leaseEnd && (overwrite || !c.leaseEnd)) c.leaseEnd = o.leaseEnd;
+  if(o.student === true) c.student = true;
+  if(o.subsidy === true) c.subsidy = true;
+  if(o.name && !c.name) c.name = o.name;
+  if(/學生/.test(val(c,'job'))) c.student = true;
+}
+
+/* ---------- rule-based fallback ---------- */
+var CN = { '一':1,'兩':2,'二':2,'三':3,'四':4,'五':5 };
+function ruleExtract(text){
+  var t = String(text || ''); var f = {}; var o = { fields:f };
+  var ph = t.match(/09\d{2}[-\s]?\d{3}[-\s]?\d{3}/);
+  if(ph){ var digits = ph[0].replace(/\D/g,''); f.phone = digits.slice(0,4)+'-'+digits.slice(4,7)+'-'+digits.slice(7); t = t.replace(ph[0], ' '); }
+  var lease = t.match(/(租約|合約|約)[^0-9]{0,6}(\d{1,2})\s*[\/月]\s*(\d{1,2})/);
+  if(lease){ o.leaseEnd = mdToYmd(+lease[2], +lease[3]); t = t.replace(lease[0], ' '); }
+  var bre = /(預算|租金|月租|價位)?\s*(\d{1,2}(?:\.\d)?\s*萬\s*\d?|\d{1,2}\s*[千kK]|\d{4,6})\s*(元|塊|以內|以下|左右|上下|內)?/g, m;
+  while((m = bre.exec(t))){
+    var num = m[2].replace(/\s/g,''); var ok = m[1] || m[3] || /萬|千|k/i.test(num) || (/^\d{4,5}$/.test(num) && +num >= 3000 && +num <= 60000);
+    if(ok){ var b = parseBudget(num); if(b >= 2000 && b <= 300000){ f.budget = String(b); break; } }
+  }
+  var ds = detectDistricts(t); var inst = t.match(/(?:我在|我是|在|到|去|靠近|離|近)?([\u4e00-\u9fa5A-Za-z]{2,6}?(大學|科大|醫大|學院|專科|高中|國中|醫院|榮總|園區))/);
+  var instName = inst ? inst[1].replace(/^(?:想住在|想住|想要|住在|我在|我是|附近的|在|到|去|靠近|離|近|住)+/,'') : '';
+  if(ds.length || instName) f.area = ds.map(districtShort).concat(instName ? [instName] : []).join('、');
+  else { var vg = t.match(/(學校|公司)附近/); if(vg) f.area = vg[0]; }
+  var pm = t.match(/(\d|一|兩|二|三|四|五)\s*個?\s*人/); if(pm) f.people = (CN[pm[1]] || pm[1]) + ' 人';
+  if(/(不|沒|沒有|無)\s*(在)?\s*抽\s*(菸|煙)/.test(t)) f.smoke = '無'; else if(/抽\s*(菸|煙)/.test(t)) f.smoke = '有';
+  if(/(沒|沒有|無|不)\s*(養)?\s*(寵物|貓|狗)/.test(t)) f.pet = '無';
+  else { var pt = t.match(/([一兩二三\d]\s*[隻只]\s*)?(貓|狗|兔子|兔|鳥|寵物)/); if(pt) f.pet = pt[0].replace(/\s/g,''); }
+  if(/男生|男性|先生/.test(t)) f.gender = '男'; else if(/女生|女性|小姐/.test(t)) f.gender = '女';
+  var ag = t.match(/(\d{2})\s*歲/); if(ag) f.age = ag[1] + ' 歲';
+  var tr = t.match(/機車|摩托車|汽車|開車|捷運|公車|腳踏車|走路/); if(tr) f.transport = tr[0];
+  var cm = t.match(/(\d{1,2})\s*分鐘/); if(cm) f.commute = cm[1] + ' 分鐘';
+  var jb = t.match(/研究生|大學生|學生|上班族|工程師|護理師|老師|業務|服務業|作業員|軍人|醫師|設計師/); if(jb) f.job = jb[0];
+  var mv = t.match(/(\d{1,2})\s*[\/月]\s*(\d{1,2})?\s*(號|日)?(初|底|中)?|月底|月初|下個月|下週|下禮拜|馬上|隨時|越快越好/);
+  if(mv){ f.moveIn = mv[0].replace(/\s/g,''); if(mv[1] && +mv[1] >= 1 && +mv[1] <= 12){ var dd = mv[2] ? +mv[2] : (mv[4] === '底' ? 28 : mv[4] === '中' ? 15 : 1); o.moveInDate = mdToYmd(+mv[1], dd); } }
+  if(/租補|租金補貼/.test(t)) o.subsidy = true;
+  if(f.job && /學生/.test(f.job)) o.student = true;
+  return o;
+}
+function kbPairs(){
+  var lines = S.kb.split(/\n+/).map(function(s){ return s.trim(); }).filter(Boolean); var out = [];
+  for(var i=0;i<lines.length;i++){
+    var q = lines[i].match(/^(問|Q)\s*[:：]\s*(.+)$/i);
+    if(q){ var a = (lines[i+1] || '').match(/^(答|A)\s*[:：]\s*(.+)$/i); if(a){ out.push({ q:q[2], a:a[2] }); i++; } }
+  }
+  return out;
+}
+function bigrams(s){ var t = String(s).replace(/[\s，。？！、,.?!～~：:（）()]/g,''); var set = {}; for(var i=0;i<t.length-1;i++) set[t.slice(i,i+2)] = 1; return set; }
+function kbMatch(text){
+  var tb = bigrams(text); var best = null, bs = 0;
+  kbPairs().forEach(function(p){ var s = 0; Object.keys(bigrams(p.q)).forEach(function(g){ if(tb[g]) s++; }); if(s > bs){ bs = s; best = p; } });
+  return bs >= 2 ? best.a.replace(/^（示範）/,'') : null;
+}
+var ASK_ORDER = ['area','budget','moveIn','people','pet','smoke','phone','job','transport','commute','gender'];
+var ASK = { area:'想住哪一區，或要靠近哪間學校、公司呢？', budget:'每月租金預算大概多少呢？', moveIn:'最快什麼時候想搬進去？', people:'幾個人要住呢？', pet:'有養寵物嗎？', smoke:'平常有抽菸嗎？', phone:'方便留一支電話嗎？帶看時比較好聯絡。', job:'方便說一下職業，或是學生嗎？', transport:'平常用什麼交通工具呢？', commute:'到學校或公司，希望騎車幾分鐘內？', gender:'方便問一下性別和年齡嗎？有些房東會問。' };
+function ruleBot(text, draft){
+  if(/(議價|殺價|便宜一點|算便宜|斡旋|合約|違約|押金.*退|客訴|律師|法律)/.test(text)){
+    return { reply: '這部分我請' + agentName() + '本人回覆您，請稍等一下喔！', handoff:true };
+  }
+  var got = ruleExtract(text); applyTo(draft, got, false);
+  var parts = []; var kb = kbMatch(text);
+  if(kb) parts.push(kb); else if(Object.keys(got.fields).length || got.leaseEnd || got.subsidy) parts.push('好的，幫您記下來了～');
+  if(got.leaseEnd) parts.push('您現在的租約 ' + fmtMD(got.leaseEnd) + ' 到期，我們會提早幫您安排看房。');
+  if(vagueArea(draft)) parts.push('請問是哪間學校（或公司）呢？這樣比較好找附近的房子。');
+  var miss = ASK_ORDER.filter(function(k){ return !val(draft,k) && !(k === 'gender' && val(draft,'age')); });
+  var ask = miss.slice(0,2).map(function(k){ return ASK[k]; });
+  if(ask.length) parts.push(ask.join('\n'));
+  else parts.push('條件都問齊了！' + agentName() + '會整理適合的物件再傳給您，請稍等～');
+  return { reply: parts.join('\n'), handoff:false };
+}
+
+/* ---------- AI prompts ---------- */
+function fieldsJson(c){ var o = {}; FIELDS.forEach(function(f){ o[f.k] = val(c, f.k); }); return JSON.stringify(o); }
+function buildBotPrompt(){
+  var b = ui.bot; var turns = b.turns.filter(function(t){ return t.role !== 'sys'; }).slice(-20);
+  var transcript = turns.map(function(t){ return (t.role === 'ai' ? '助理：' : '客人：') + t.text; }).join('\n');
+  return [
+    '你是台中租屋仲介「' + agentName() + '」的 LINE 官方帳號 AI 助理，名字叫「' + botName() + '」，正在 LINE 上接待想租屋的客人。',
+    '',
+    '規則：',
+    '1. 只用下方知識庫回答客人的問題。知識庫沒寫的事不要編，答案開頭若有「（示範）」字樣要拿掉。',
+    '2. 自然地把 12 項找房條件問齊。每則訊息最多追問 2 項還缺的，不要一次丟整張表。',
+    '3. 絕不說任何特定物件「還在」或「已租出」，也不要報你不知道的物件。物件每天在變，一律說會請' + agentName() + '本人確認後推薦。',
+    '4. 遇到議價、斡旋、合約或法律問題、客訴，或你不確定的事：handoff 設 true，並跟客人說會請' + agentName() + '本人回覆。',
+    '5. 口吻像 LINE 聊天：短句、親切、繁體中文，每則不超過 80 字，不用 markdown。',
+    '6. 客人只說「學校附近」「公司附近」時，要追問學校或公司全名。',
+    '7. 條件大致問齊後，告訴客人會整理好物件再傳給他。',
+    '',
+    '知識庫：', S.kb.slice(0, 4000),
+    '',
+    '12 項條件目前已知（空字串代表還不知道）：', fieldsJson(b.draft),
+    '欄位說明：people 入住人數、moveIn 最快入住時間、job 職業身份、smoke 有無抽菸、pet 有無寵物、phone 電話、gender 性別、age 年齡、area 希望居住行政區或學校／公司全名、budget 預算、transport 交通工具、commute 騎車幾分鐘到 area 的地點。',
+    '今天日期：' + todayStr() + '（台灣）',
+    '',
+    '對話紀錄：', transcript,
+    '',
+    '只回覆一個 JSON 物件，不要其他文字：',
+    '{"reply":"要傳給客人的訊息","fields":{只放這次新得知或更正的欄位},"moveInDate":"最快入住日 YYYY-MM-DD，不確定給空字串","leaseEnd":"客人現在租約到期日 YYYY-MM-DD，沒提到給空字串","student":null,"subsidy":null,"customerName":"客人自稱，沒有給空字串","handoff":false}',
+    'budget 只填數字，例如 8000。student、subsidy 客人有明說才填 true 或 false，否則 null。'
+  ].join('\n');
+}
+function pastePrompt(txt){
+  return [
+    '以下是台中租屋仲介和客人的 LINE 對話紀錄。請整理出客人的找房條件。',
+    '今天日期：' + todayStr() + '（台灣）',
+    '',
+    '只回覆一個 JSON 物件，不要其他文字：',
+    '{"customerName":"","fields":{"people":"","moveIn":"","job":"","smoke":"","pet":"","phone":"","gender":"","age":"","area":"","budget":"","transport":"","commute":""},"moveInDate":"","leaseEnd":"","student":null,"subsidy":null,"summary":""}',
+    '規則：沒提到的欄位給空字串，不要猜。area 是希望居住的台中行政區，或學校、公司全名；客人只說「學校附近」就照原話填。budget 只填數字。moveInDate、leaseEnd 用 YYYY-MM-DD，不確定給空字串。student、subsidy 有明說才填 true 或 false。summary 用一句話寫客人需求和目前進度。',
+    '',
+    '對話：', '"""', txt, '"""'
+  ].join('\n');
+}
+
+/* ---------- views: landing ---------- */
+function topbarLanding(){
+  return '<header class="topbar"><button class="brand" data-act="home" aria-label="房客簿首頁"><span class="mark" aria-hidden="true">簿</span>房客簿</button><span class="spacer"></span>' +
+    (S.profile ? '<button class="btn primary" data-act="enter">進入後台</button>' : '<button class="btn ghost" data-act="signup">建立後台</button>') + '</header>';
+}
+function demoRow(n, label, v, t){
+  return '<div class="frow' + (v ? ' fill' : '') + '"' + (v ? ' data-t="' + t + '"' : '') + '><span class="fnum">' + n + '</span><span class="flabel">' + label + '</span><span class="fval">' + (v ? '<span class="v">' + v + '</span>' : '&nbsp;') + '</span></div>';
+}
+function viewLanding(){
+  return topbarLanding() + '<main class="wrap">' +
+  '<section class="hero">' +
+    '<div class="hero-copy">' +
+      '<h1>客人在 LINE 講的每一句，都自動寫進客戶卡。</h1>' +
+      '<p class="lede">AI 先幫你回覆常見問題、把 12 項找房條件問齊，再照你的規則取好代稱、排好提醒。你專心帶看就好。</p>' +
+      '<div class="cta-row"><button class="btn primary" data-act="' + (S.profile ? 'enter' : 'signup') + '">' + (S.profile ? '進入我的後台' : '免費建立我的後台') + '</button><button class="btn ghost" data-act="replay">再看一次示範</button></div>' +
+      '<p class="fine">給台中租屋房仲使用，內測期間免費。</p>' +
+    '</div>' +
+    '<div class="hero-demo" id="heroDemo" role="img" aria-label="示範：客人在 LINE 說出找房條件，右邊的客戶卡自動填好，代稱是未北區8000，還缺 5 項">' +
+      '<div class="demo-chat" aria-hidden="true">' +
+        '<p class="demo-top">你的 LINE 官方帳號</p>' +
+        '<p class="msg them" data-t="300">你好～想找北區 8000 以內的套房</p>' +
+        '<p class="msg ai" data-t="1300">您好！請問幾位入住、最快什麼時候想搬呢？</p>' +
+        '<p class="msg them" data-t="2300">我一個人，10 月初，沒養寵物也不抽菸</p>' +
+        '<p class="msg ai" data-t="3300">好的～方便留支電話，帶看時好聯絡您嗎？</p>' +
+        '<p class="msg them" data-t="4200">0900-000-101</p>' +
+      '</div>' +
+      '<div class="demo-card paper" aria-hidden="true">' +
+        '<div class="cv-head"><span class="stamp demo-stamp" data-t="5200">未北區8000</span><span class="miss demo-miss" data-t="5400">還缺 5 項</span></div>' +
+        demoRow(1,'入住人數','1 人',2800) + demoRow(2,'最快入住','10 月初',2900) + demoRow(3,'職業身份','',0) +
+        demoRow(4,'有無抽菸','無',3000) + demoRow(5,'有無寵物','無',3000) + demoRow(6,'電話號碼','0900-000-101',4700) +
+        demoRow(7,'性別','',0) + demoRow(8,'年齡','',0) + demoRow(9,'行政區','北區',800) +
+        demoRow(10,'預算','8000',900) + demoRow(11,'交通工具','',0) + demoRow(12,'通勤時間','',0) +
+      '</div>' +
+    '</div>' +
+  '</section>' +
+  '<section class="section"><h2>從客人來訊到帶看，中間不用你抄寫</h2><ol class="steps">' +
+    '<li><div class="n">1</div><h3>客人在 LINE 來訊</h3><p>半夜傳的也接得住。服務費、看房時間這類常見問題，AI 照你寫的知識庫回答。</p></li>' +
+    '<li><div class="n">2</div><h3>AI 把 12 項條件問齊</h3><p>人數、入住時間、預算、地區、寵物、電話，每次只問兩項，客人不會覺得在填表。只寫「學校附近」的會追問是哪間。</p></li>' +
+    '<li><div class="n">3</div><h3>自動建卡、取代稱</h3><p>照「未＋地區＋預算」取代稱，例如「未北區8000」，同區同預算自動加識別字，成交後改成「已」。</p></li>' +
+    '<li><div class="n">4</div><h3>到期提醒、約看進日曆</h3><p>租約到期前 10 天提醒你聯絡，學生或要租補的提前 15 天。約看行程標題直接帶客戶代稱和電話。</p></li>' +
+  '</ol></section>' +
+  '<section class="section"><h2>省下的，是這些零碎時間</h2><table class="cmp"><thead><tr><th scope="col">現在的做法</th><th scope="col">用房客簿</th></tr></thead><tbody>' +
+    '<tr><td>客人的條件散在聊天紀錄裡，要回頭一則一則翻</td><td>12 項條件整理成一張卡，缺哪幾項用螢光筆標出來</td></tr>' +
+    '<tr><td>半夜來訊沒回，隔天客人已經找別家</td><td>AI 先接住，問齊條件；議價、合約這類問題轉給你本人</td></tr>' +
+    '<tr><td>客人的租約快到期，自己忘了聯絡</td><td>到期前 10 天出現在提醒清單，學生或需租補的提前 15 天</td></tr>' +
+    '<tr><td>日曆上只寫地址，事後不知道是哪位客人要看</td><td>約看行程標題自動寫上客戶代稱和電話</td></tr>' +
+  '</tbody></table></section>' +
+  '<section class="section faq"><h2>常見問題</h2>' +
+    '<details><summary>一定要有 LINE 官方帳號嗎？</summary><p>AI 自動回覆需要 LINE 官方帳號，免費方案就能用。個人 LINE 沒辦法串接自動回覆，但你還是可以用「整理對話」，把聊天紀錄貼進來建成客戶卡。這個原型先用模擬聊天視窗示範。</p></details>' +
+    '<details><summary>客人的資料存在哪裡？</summary><p>原型階段只存在你這台裝置的瀏覽器，不會上傳到任何地方。正式版的存放方式和隱私權政策，會在上線前另外公布。</p></details>' +
+    '<details><summary>AI 會不會亂回物件資訊？</summary><p>AI 只用你在知識庫寫的內容回答，不會自己說哪間房還在或租掉了。遇到議價、合約、法律問題，或它不確定的事，會請客人等你本人回覆，並出現在你的提醒清單。</p></details>' +
+    '<details><summary>要多少錢？</summary><p>內測期間免費。正式收費方式確定後，會先通知內測使用者。</p></details>' +
+  '</section></main>' +
+  '<footer class="foot">房客簿（暫定名）原型，內測中。畫面上所有客戶資料都是虛構示範。</footer>';
+}
+var heroTimers = [];
+function playHero(){
+  var root = $('#heroDemo'); if(!root) return;
+  heroTimers.forEach(clearTimeout); heroTimers = [];
+  var steps = root.querySelectorAll('[data-t]');
+  Array.prototype.forEach.call(steps, function(s){ s.classList.remove('on'); });
+  if(reduced){ Array.prototype.forEach.call(steps, function(s){ s.classList.add('on'); }); return; }
+  void root.offsetWidth;
+  Array.prototype.forEach.call(steps, function(s){ heroTimers.push(setTimeout(function(){ s.classList.add('on'); }, +s.getAttribute('data-t'))); });
+}
+
+/* ---------- views: signup / profile ---------- */
+function profileFields(p){
+  p = p || {}; var areas = p.areas || [];
+  return '<label class="lb" for="pf-name">你的名字（客人會看到）</label><input id="pf-name" class="inp" type="text" autocomplete="name" value="' + esc(p.name || '') + '" placeholder="例：陳凱">' +
+    '<label class="lb" for="pf-company">公司名稱（選填）</label><input id="pf-company" class="inp" type="text" value="' + esc(p.company || '') + '">' +
+    '<label class="lb" for="pf-phone">手機（選填）</label><input id="pf-phone" class="inp" type="tel" value="' + esc(p.phone || '') + '">' +
+    '<fieldset><legend>主要服務區域</legend><div class="dchips">' + DISTRICTS.map(function(d){ var s = districtShort(d); return '<label class="dchip"><input type="checkbox" name="pf-area" value="' + s + '"' + (areas.indexOf(s) >= 0 ? ' checked' : '') + '><span>' + s + '</span></label>'; }).join('') + '</div></fieldset>' +
+    '<label class="lb" for="pf-bot">AI 助理的名字</label><input id="pf-bot" class="inp" type="text" value="' + esc(p.bot || '小幫手') + '">';
+}
+function readProfile(){
+  var name = $('#pf-name').value.trim();
+  return { name:name, company:$('#pf-company').value.trim(), phone:$('#pf-phone').value.trim(), bot:$('#pf-bot').value.trim() || '小幫手',
+    areas: Array.prototype.map.call(document.querySelectorAll('input[name="pf-area"]:checked'), function(i){ return i.value; }) };
+}
+function viewSignup(){
+  return topbarLanding() + '<main class="form-page"><h1>建立你的後台</h1>' +
+    '<p class="fine">填完就能開始用。原型階段不用設密碼，資料只存在這台裝置的瀏覽器。</p>' +
+    profileFields(null) +
+    '<label class="check" style="margin-top:1rem"><input type="checkbox" id="su-demo" checked> 先放入示範客戶，看看後台長什麼樣子</label>' +
+    '<p class="err" id="su-err" hidden></p>' +
+    '<div class="cta-row"><button class="btn primary" data-act="do-signup">建立後台</button><button class="btn ghost" data-act="home">回首頁</button></div></main>';
+}
+
+/* ---------- views: app ---------- */
+var TABS = [['clients','客戶簿'],['bot','AI 接客測試'],['paste','整理對話'],['remind','提醒'],['settings','設定']];
+function viewApp(){
+  var n = urgentCount();
+  var nav = '<nav class="tabs" aria-label="後台">' + TABS.map(function(t){
+    return '<button class="tab" data-act="tab" data-v="' + t[0] + '"' + (ui.tab === t[0] ? ' aria-current="page"' : '') + '>' + t[1] + (t[0] === 'remind' ? '<span class="badge" id="remindBadge"' + (n ? '' : ' hidden') + '>' + n + '</span>' : '') + '</button>';
+  }).join('') + '</nav>';
+  var body = ui.tab === 'clients' ? viewClients() : ui.tab === 'bot' ? viewBot() : ui.tab === 'paste' ? viewPaste() : ui.tab === 'remind' ? viewRemind() : viewSettings();
+  return '<header class="topbar"><button class="brand" data-act="home" aria-label="回到房客簿介紹頁"><span class="mark" aria-hidden="true">簿</span>房客簿</button>' + nav + '<span class="spacer"></span><span class="who">' + esc(agentName()) + '</span></header><main class="app-main">' + body + '</main>';
+}
+function refreshBadge(){ var b = $('#remindBadge'); if(!b) return; var n = urgentCount(); b.textContent = n; b.hidden = !n; }
+
+/* clients */
+function viewClients(){
+  return '<div class="toolbar"><h1 class="tab-title">客戶簿</h1><div class="tools">' +
+    '<label class="sr" for="q">搜尋客戶</label><input id="q" class="inp" type="search" data-bind="q" placeholder="搜尋代稱、電話、地區" value="' + esc(ui.q) + '">' +
+    '<div class="seg" role="group" aria-label="篩選">' + ['未結案','全部','已結案'].map(function(x){ return '<button data-act="filter" data-v="' + x + '" aria-pressed="' + (ui.filter === x) + '">' + x + '</button>'; }).join('') + '</div>' +
+    '<div class="seg" role="group" aria-label="顯示方式">' + [['list','列表'],['board','依階段']].map(function(x){ return '<button data-act="layout" data-v="' + x[0] + '" aria-pressed="' + (ui.layout === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+    '<button class="btn primary" data-act="add-client">新增客戶</button></div></div>' +
+    '<div id="clientList">' + clientListHTML() + '</div>';
+}
+function filteredClients(A){
+  var q = ui.q.trim().toLowerCase();
+  return S.clients.filter(function(c){
+    var closed = CLOSED.indexOf(c.stage) >= 0;
+    if(ui.filter === '未結案' && closed) return false;
+    if(ui.filter === '已結案' && !closed) return false;
+    if(!q) return true;
+    var hay = [A[c.id].text, c.name, val(c,'phone'), val(c,'area'), val(c,'job'), c.stage].join(' ').toLowerCase();
+    return hay.indexOf(q) >= 0;
+  }).sort(function(a,b){ return b.updatedAt - a.updatedAt; });
+}
+function clientListHTML(){
+  if(!S.clients.length){
+    return '<div class="blank"><p class="t">客戶簿還是空的。</p><p>讓 AI 接一位模擬客人，或把一段 LINE 對話貼進來整理，客戶卡就會出現在這裡。</p><div class="cta-row"><button class="btn primary" data-act="tab" data-v="bot">讓 AI 接一位客人</button><button class="btn ghost" data-act="tab" data-v="paste">貼上 LINE 對話</button><button class="btn ghost" data-act="load-demo">放入示範客戶</button></div></div>';
+  }
+  var A = computeAliases(); var list = filteredClients(A);
+  if(ui.layout === 'board'){
+    var stages = ui.filter === '未結案' ? STAGES.filter(function(s){ return CLOSED.indexOf(s) < 0; }) : ui.filter === '已結案' ? CLOSED : STAGES;
+    return '<div class="board">' + stages.map(function(s){
+      var items = list.filter(function(c){ return c.stage === s; });
+      return '<section class="col" aria-label="' + s + '"><h3><span>' + s + '</span><span>' + items.length + '</span></h3>' + items.map(function(c){
+        var a = A[c.id]; var miss = missingOf(c).length;
+        return '<button class="ticket" data-act="open-client" data-v="' + c.id + '"><span class="stamp' + (a.raw ? ' raw' : '') + '">' + esc(displayName(a)) + '</span><p>' + esc(summary(c)) + '</p>' + (miss ? '<p><span class="miss">還缺 ' + miss + ' 項</span></p>' : '') + '</button>';
+      }).join('') + '</section>';
+    }).join('') + '</div>';
+  }
+  if(!list.length) return '<div class="blank"><p class="t">沒有符合的客戶。</p><p>換個篩選條件，或清掉搜尋文字。</p></div>';
+  return '<div class="ledger" role="list"><div class="lhead" aria-hidden="true"><span>代稱</span><span>條件</span><span>資料</span><span>階段</span><span>更新</span></div>' +
+    list.map(function(c){
+      var a = A[c.id]; var miss = missingOf(c).length; var closed = CLOSED.indexOf(c.stage) >= 0;
+      return '<button class="lrow" role="listitem" data-act="open-client" data-v="' + c.id + '"><span><span class="stamp' + (a.raw ? ' raw' : '') + '">' + esc(displayName(a)) + '</span></span><span class="lsum">' + esc(summary(c)) + '</span><span class="lmiss"><span class="miss' + (miss ? '' : ' ok') + '">' + (miss ? '還缺 ' + miss + ' 項' : '已問齊') + '</span></span><span class="stage' + (closed ? ' closed' : '') + '">' + c.stage + '</span><span class="lago">' + ago(c.updatedAt) + '</span></button>';
+    }).join('') + '</div>';
+}
+function refreshList(){ var el = $('#clientList'); if(el) el.innerHTML = clientListHTML(); refreshBadge(); }
+
+/* detail */
+var lastFocus = null;
+function openDetail(id){
+  var c = getClient(id); if(!c) return;
+  lastFocus = document.activeElement; ui.openId = id;
+  $('#detailRoot').innerHTML = detailHTML(c);
+  var btn = $('#detailRoot .d-head .btn'); if(btn) btn.focus();
+}
+function closeDetail(){
+  ui.openId = null; $('#detailRoot').innerHTML = '';
+  if(ui.view === 'app'){ if(ui.tab === 'clients') refreshList(); else if(ui.tab === 'remind') rerenderTab(); }
+  if(lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+}
+function detailHead(c){
+  var a = computeAliases()[c.id]; var miss = missingOf(c);
+  return '<h2 class="d-title" id="dTitle"><span class="stamp' + (a.raw ? ' raw' : '') + '">' + esc(displayName(a)) + '</span></h2>' +
+    '<p class="d-meta">' + (a.raw ? esc(a.why) + '。' : '') + (miss.length ? '還缺 ' + miss.length + ' 項：' + miss.map(function(f){ return f.s; }).join('、') : '12 項條件都問齊了') + '</p>';
+}
+function remindLine(c){
+  var lead = (c.student || c.subsidy) ? 15 : 10;
+  if(!isYmd(c.leaseEnd)) return '填入現租約到期日，系統會在到期前 10 天提醒你聯絡（學生或需租補提前 15 天）。';
+  return '會在 ' + fmtMD(addDays(c.leaseEnd, -lead)) + ' 提醒你聯絡客人（租約到期前 ' + lead + ' 天' + (lead === 15 ? '，因為是學生或需租補' : '') + '）。';
+}
+function viewingsHTML(c){
+  var a = computeAliases()[c.id];
+  if(!c.viewings.length) return '<p class="fine">還沒有約看。</p>';
+  var warn = val(c,'phone') ? '' : '<p class="warn">這位客人還沒有電話，約看前先跟對方要。</p>';
+  return warn + '<ul class="vlist">' + c.viewings.slice().sort(function(x,y){ return String(x.when).localeCompare(String(y.when)); }).map(function(v){
+    return '<li><span class="vwhen">' + esc(fmtWhen(v.when)) + '</span><span class="vaddr">' + esc(v.address) + '</span><a class="btn small ghost" href="' + esc(gcalLink(c, a, v)) + '" target="_blank" rel="noopener">加到 Google 日曆</a><button class="btn small ghost" data-act="del-viewing" data-v="' + esc(v.id) + '">刪除</button></li>';
+  }).join('') + '</ul><p class="fine">行程標題會帶客戶代稱和電話。加到日曆後，記得把提醒設成提前 1 小時。</p>';
+}
+function logHTML(c){ return c.log.slice().reverse().map(function(l){ return '<li><time>' + esc(fmtTs(l.t)) + '</time><span>' + esc(l.text) + '</span></li>'; }).join(''); }
+function detailHTML(c){
+  return '<div class="scrim" data-act="close-detail"></div><aside class="detail" role="dialog" aria-modal="true" aria-labelledby="dTitle">' +
+    '<header class="d-head"><div id="dHead">' + detailHead(c) + '</div><button class="btn ghost small" data-act="close-detail">關閉</button></header>' +
+    '<div class="d-body">' +
+      (c.handoff ? '<div class="warn">AI 轉交給你：客人問「' + esc(c.handoff) + '」，需要你本人回覆。<br><button class="btn small" data-act="clear-handoff" style="margin-top:.4rem">已經回覆了</button></div>' : '') +
+      '<div class="grid2"><div><label class="lb" for="d-name">原本稱呼</label><input id="d-name" class="inp" type="text" data-cf="name" value="' + esc(c.name) + '" placeholder="例：LINE 暱稱"></div>' +
+      '<div><label class="lb" for="d-stage">階段</label><select id="d-stage" class="inp" data-cf="stage">' + STAGES.map(function(s){ return '<option' + (s === c.stage ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div></div>' +
+      '<h3 class="d-sec">找房條件</h3><div class="paper form">' + FIELDS.map(function(f){
+        var v = val(c, f.k);
+        return '<label class="frow"><span class="fnum">' + f.n + '</span><span class="flabel">' + f.label + '</span><input class="fin' + (v ? '' : ' empty') + '" type="' + (f.k === 'phone' ? 'tel' : 'text') + '" data-ff="' + f.k + '" value="' + esc(v) + '" placeholder="' + esc(f.ph || '還沒問') + '"></label>';
+      }).join('') + '</div>' +
+      '<div id="vagueWarn">' + (vagueArea(c) ? '<p class="warn">第 9 項只寫「附近」，記得問客人是哪間學校或公司的全名，才對得到行政區。</p>' : '') + '</div>' +
+      '<h3 class="d-sec">日期與身份</h3>' +
+      '<div class="grid2"><div><label class="lb" for="d-move">最快入住日</label><input id="d-move" class="inp" type="date" data-cf="moveInDate" value="' + esc(c.moveInDate) + '"></div>' +
+      '<div><label class="lb" for="d-lease">現租約到期日</label><input id="d-lease" class="inp" type="date" data-cf="leaseEnd" value="' + esc(c.leaseEnd) + '"></div></div>' +
+      '<div><label class="check"><input type="checkbox" data-cf="student"' + (c.student ? ' checked' : '') + '> 學生</label><label class="check"><input type="checkbox" data-cf="subsidy"' + (c.subsidy ? ' checked' : '') + '> 需要租補</label></div>' +
+      '<p class="fine" id="remindLine">' + esc(remindLine(c)) + '</p>' +
+      '<h3 class="d-sec">約看行程</h3><div id="viewings">' + viewingsHTML(c) + '</div>' +
+      '<div class="grid2"><div><label class="lb" for="vWhen">日期時間</label><input id="vWhen" class="inp" type="datetime-local"></div><div><label class="lb" for="vAddr">物件地址</label><input id="vAddr" class="inp" type="text" placeholder="例：北區示範路 12 號 3F"></div></div>' +
+      '<div class="cta-row" style="margin-top:.7rem"><button class="btn" data-act="add-viewing">加入約看</button></div>' +
+      '<h3 class="d-sec">追蹤紀錄</h3><ol class="log" id="logList">' + logHTML(c) + '</ol>' +
+      '<label class="sr" for="logIn">新增追蹤紀錄</label><textarea id="logIn" class="inp" rows="2" placeholder="例：已傳 3 間物件給客人，等回覆"></textarea>' +
+      '<div class="cta-row" style="margin-top:.6rem"><button class="btn" data-act="add-log">新增紀錄</button></div>' +
+      (c.chat && c.chat.length ? '<details class="transcript"><summary>AI 接客對話（' + c.chat.length + ' 則）</summary>' + c.chat.map(function(t){ return '<p><strong>' + (t.role === 'ai' ? esc(botName()) : '客人') + '：</strong>' + esc(t.text) + '</p>'; }).join('') + '</details>' : '') +
+      '<hr class="d-hr"><button class="btn danger" data-act="delete-client">刪除這位客戶</button>' +
+    '</div></aside>';
+}
+function refreshDetailBits(c){
+  var h = $('#dHead'); if(h) h.innerHTML = detailHead(c);
+  var r = $('#remindLine'); if(r) r.textContent = remindLine(c);
+  var v = $('#viewings'); if(v) v.innerHTML = viewingsHTML(c);
+  var w = $('#vagueWarn'); if(w) w.innerHTML = vagueArea(c) ? '<p class="warn">第 9 項只寫「附近」，記得問客人是哪間學校或公司的全名，才對得到行政區。</p>' : '';
+  var l = $('#logList'); if(l) l.innerHTML = logHTML(c);
+}
+
+/* bot */
+function freshBot(){
+  return { draft: newClient({ source:'AI 接客' }), busy:false, ctl:null,
+    turns: [{ role:'ai', text:'您好，我是' + agentName() + '的助理' + botName() + '～想找什麼樣的房子呢？可以先告訴我預算和想住的區域。' }] };
+}
+function viewBot(){
+  if(!ui.bot) ui.bot = freshBot();
+  var chips = ['想找北區 8000 以內的套房','我是學生，想住中國醫藥大學附近','可以養貓嗎？','服務費怎麼算？','租金可以便宜一點嗎'];
+  return '<h1 class="tab-title">AI 接客測試</h1><p class="fine" style="max-width:46em">用客人的身分打字，看 AI 怎麼回覆、怎麼把條件整理成右邊的客戶卡。正式版會直接接在你的 LINE 官方帳號上。</p>' +
+    '<div class="bot-wrap"><section class="phone" aria-label="模擬 LINE 聊天">' +
+      '<div class="phone-top"><span>' + esc((S.profile && S.profile.company) || agentName()) + '</span><span class="pill" id="modePill">檢查 AI 中</span></div>' +
+      '<div class="chatlog" id="chatlog" aria-live="polite"></div>' +
+      '<div class="suggest">' + chips.map(function(t){ return '<button class="chip" data-act="chip" data-v="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' +
+      '<div class="composer"><label class="sr" for="chatIn">用客人的身分輸入訊息</label><textarea id="chatIn" rows="1" placeholder="用客人的身分打字"></textarea><button class="btn primary" data-act="send">送出</button></div>' +
+    '</section><section aria-labelledby="liveTitle"><div class="live-head"><h2 id="liveTitle">正在整理的客戶卡</h2><div class="cta-row" style="margin:0"><button class="btn primary" data-act="bot-save">存進客戶簿</button><button class="btn ghost" data-act="bot-reset">換一位客人</button></div></div>' +
+      '<div id="livecard"></div><p class="fine" id="modeNote" style="margin-top:.8rem"></p></section></div>';
+}
+function cardView(c, a){
+  a = a || baseAlias(c); var miss = missingOf(c);
+  return '<div class="paper"><div class="cv-head"><span class="stamp' + (a.raw ? ' raw' : '') + '">' + esc(a.text || '新客人') + '</span><span class="miss' + (miss.length ? '' : ' ok') + '">' + (miss.length ? '還缺 ' + miss.length + ' 項' : '12 項已問齊') + '</span></div>' +
+    (a.raw && a.why ? '<p class="fine">' + esc(a.why) + '</p>' : '') +
+    FIELDS.map(function(f){ var v = val(c, f.k); return '<div class="frow"><span class="fnum">' + f.n + '</span><span class="flabel">' + f.label + '</span><span class="fval' + (v ? '' : ' empty') + '">' + (v ? esc(v) : '還沒問') + '</span></div>'; }).join('') +
+    (c.leaseEnd ? '<p class="fine" style="margin-top:.6rem">現租約到期：' + esc(c.leaseEnd) + '</p>' : '') +
+    (vagueArea(c) ? '<p class="warn">只寫「附近」，要問學校或公司全名。</p>' : '') +
+    (c.handoff ? '<p class="warn">AI 轉交給你：「' + esc(c.handoff) + '」</p>' : '') + '</div>';
+}
+function renderChat(){
+  var log = $('#chatlog'); if(!log || !ui.bot) return;
+  log.innerHTML = ui.bot.turns.map(function(t){
+    if(t.role === 'sys') return '<p class="sys">' + esc(t.text) + '</p>';
+    return '<p class="msg ' + (t.role === 'ai' ? 'ai' : 'them') + '">' + esc(t.text) + '</p>';
+  }).join('') + (ui.bot.busy ? '<p class="msg ai typing">' + esc(botName()) + ' 輸入中…</p>' : '');
+  log.scrollTop = log.scrollHeight;
+  var send = document.querySelector('[data-act="send"]'); if(send) send.disabled = ui.bot.busy;
+}
+function renderLive(){ var el = $('#livecard'); if(el && ui.bot) el.innerHTML = cardView(ui.bot.draft); }
+function updateModePill(){
+  var p = $('#modePill'), n = $('#modeNote'); if(!p) return;
+  if(ui.aiState === 'ai'){ p.textContent = 'AI 回覆中'; p.className = 'pill ai'; if(n) n.textContent = '第一次送出時，Claude 會詢問是否允許這個頁面使用 AI，費用算在你自己的 Claude 帳號用量。'; }
+  else if(ui.aiState === 'demo'){ p.textContent = '規則模式'; p.className = 'pill'; if(n) n.textContent = '目前沒有接上 AI，改用簡單規則抓條件和回覆，效果比 AI 差，只用來示範流程。'; }
+  else { p.textContent = '檢查 AI 中'; p.className = 'pill'; }
+}
+function checkAI(){
+  getSample().then(function(s){ ui.aiState = (s && !aiDisabled) ? 'ai' : 'demo'; updateModePill(); });
+}
+function sendChat(textArg){
+  if(!ui.bot || ui.bot.busy) return;
+  var box = $('#chatIn'); var text = String(textArg != null ? textArg : (box ? box.value : '')).trim();
+  if(!text) return;
+  if(box && textArg == null) box.value = '';
+  var bot = ui.bot;
+  bot.turns.push({ role:'customer', text:text }); bot.busy = true; renderChat();
+  getSample().then(function(sample){
+    if(!sample) return null;
+    bot.ctl = new AbortController();
+    return sample.json(buildBotPrompt(), { modelTier:'quick', cache:false, signal: bot.ctl.signal })
+      .then(function(r){ return { ok:true, o: normalizeAI(r) }; })
+      .catch(function(e){ return { ok:false, code: e && e.code }; });
+  }).then(function(res){
+    if(ui.bot !== bot) return;
+    if(res && !res.ok && res.code === 'cancelled'){ bot.busy = false; renderChat(); return; }
+    var reply = '', handoff = false;
+    if(res && res.ok && res.o.reply){
+      applyTo(bot.draft, res.o, true); reply = res.o.reply; handoff = res.o.handoff; ui.aiState = 'ai';
+    } else {
+      if(res && !res.ok){
+        if(PERM.indexOf(res.code) >= 0){ aiDisabled = true; ui.aiState = 'demo'; }
+        toast(aiErrorCopy(res.code));
+        bot.turns.push({ role:'sys', text:'這則改用規則模式回覆' });
+      }
+      var rb = ruleBot(text, bot.draft); reply = rb.reply; handoff = rb.handoff;
+      if(!res) ui.aiState = 'demo';
+    }
+    bot.turns.push({ role:'ai', text:reply });
+    if(handoff){ bot.draft.handoff = text; bot.turns.push({ role:'sys', text:'已標記給' + agentName() + '本人回覆' }); }
+    bot.busy = false; renderChat(); renderLive(); updateModePill();
+  });
+}
+function botSave(){
+  var d = ui.bot && ui.bot.draft; if(!d) return;
+  var filled = FIELDS.some(function(f){ return val(d, f.k); });
+  if(!filled && !d.handoff){ toast('還沒有任何條件，先跟 AI 聊幾句'); return; }
+  var chat = ui.bot.turns.filter(function(t){ return t.role !== 'sys'; }).slice(-40).map(function(t){ return { role: t.role === 'ai' ? 'ai' : 'customer', text: t.text }; });
+  var c = newClient({ source:'AI 接客', name: d.name, fields: d.fields, moveInDate: d.moveInDate, leaseEnd: d.leaseEnd, student: d.student, subsidy: d.subsidy, handoff: d.handoff, chat: chat,
+    stage: missingOf(d).length ? '資料蒐集中' : '待推薦' });
+  if(!c.name) c.name = 'LINE 客人 ' + fmtTs(Date.now());
+  c.log.push({ t: Date.now(), text: 'AI 接客對話 ' + chat.length + ' 則' + (d.handoff ? '，有一題轉交給你' : '') });
+  var dup = findByPhone(val(c,'phone'));
+  S.clients.unshift(c); save();
+  ui.bot = freshBot(); ui.tab = 'clients'; render(); openDetail(c.id);
+  toast(dup ? '已存進客戶簿。注意：「' + displayName(computeAliases()[dup.id]) + '」用的是同一支電話' : '已存進客戶簿');
+}
+function findByPhone(p, exceptId){
+  var d = String(p || '').replace(/\D/g,''); if(d.length < 8) return null;
+  for(var i=0;i<S.clients.length;i++){ var c = S.clients[i]; if(c.id !== exceptId && val(c,'phone').replace(/\D/g,'') === d) return c; }
+  return null;
+}
+
+/* paste */
+var PASTE_EXAMPLE = '10:12 Mia：你好～我看到你們的物件，想問西屯有沒有 1 萬以內的套房\n10:15 我：您好！請問幾位入住、什麼時候想搬呢？\n10:20 Mia：我一個人，11/1 左右，我在台中榮總當護理師\n10:21 Mia：我有一隻貓可以嗎\n10:25 我：可以幫您找能養貓的，方便留電話嗎？\n10:30 Mia：0900-000-777，我騎機車，希望 15 分鐘內到醫院\n10:31 Mia：我現在的租約 10/31 到期';
+function viewPaste(){
+  return '<h1 class="tab-title">整理對話</h1><p class="fine" style="max-width:46em">把 LINE 聊天紀錄整段複製貼上，AI 會挑出 12 項條件，整理成一張客戶卡。個人 LINE 的對話也能用這個方式整理。</p>' +
+    '<label class="lb" for="pasteIn">LINE 對話紀錄</label><textarea id="pasteIn" class="inp" rows="10" placeholder="在 LINE 聊天室裡長按訊息，選「複製」，貼到這裡"></textarea>' +
+    '<div class="cta-row"><button class="btn primary" data-act="paste-run" id="pasteBtn">整理成客戶卡</button><button class="btn ghost" data-act="paste-example">貼上示範對話</button></div>' +
+    '<div id="pasteOut">' + pasteOutHTML() + '</div>';
+}
+function pasteOutHTML(){
+  var p = ui.paste; if(!p) return '';
+  if(p.busy) return '<p class="fine">' + (p.ai ? 'AI 整理中，通常十幾秒到一分鐘…' : '整理中…') + '</p>';
+  if(!p.client) return '';
+  var dup = findByPhone(val(p.client,'phone'));
+  var A = computeAliases();
+  return '<h2 class="d-sec">整理結果' + (p.mode === 'rule' ? '（規則模式）' : '') + '</h2>' +
+    (p.summary ? '<p>' + esc(p.summary) + '</p>' : '') +
+    '<div style="max-width:560px">' + cardView(p.client) + '</div>' +
+    '<div class="cta-row">' + (dup ? '<button class="btn primary" data-act="paste-merge" data-v="' + dup.id + '">補進「' + esc(displayName(A[dup.id])) + '」的客戶卡</button><button class="btn ghost" data-act="paste-save">另存成新客戶</button>' : '<button class="btn primary" data-act="paste-save">存進客戶簿</button>') + '</div>' +
+    (dup ? '<p class="fine">客戶簿裡已經有同一支電話的客人。補進去只會填空白的欄位，不會蓋掉原本的資料。</p>' : '');
+}
+function renderPasteOut(){ var el = $('#pasteOut'); if(el) el.innerHTML = pasteOutHTML(); var b = $('#pasteBtn'); if(b) b.disabled = !!(ui.paste && ui.paste.busy); }
+function runPaste(){
+  var box = $('#pasteIn'); var txt = box ? box.value.trim() : '';
+  if(!txt){ toast('先貼上一段對話'); return; }
+  ui.paste = { busy:true, ai:false }; renderPasteOut();
+  getSample().then(function(sample){
+    if(!sample) return null;
+    ui.paste.ai = true; renderPasteOut();
+    return sample.json(pastePrompt(txt.slice(0, 12000)), { modelTier:'default' })
+      .then(function(r){ return { ok:true, o: normalizeAI(r) }; })
+      .catch(function(e){ return { ok:false, code: e && e.code }; });
+  }).then(function(res){
+    var c = newClient({ source:'貼上整理' }); var mode = 'ai'; var sum = '';
+    if(res && res.ok){ applyTo(c, res.o, true); sum = res.o.summary; }
+    else {
+      if(res && !res.ok){ if(PERM.indexOf(res.code) >= 0) aiDisabled = true; toast(aiErrorCopy(res.code)); }
+      mode = 'rule'; applyTo(c, ruleExtract(txt), true);
+      var nm = txt.match(/^\s*(?:\d{1,2}:\d{2}\s*)?([^\s：:]{1,10})[：:]/); if(nm && nm[1] !== '我') c.name = nm[1];
+    }
+    ui.paste = { busy:false, client:c, mode:mode, summary:sum, raw:txt };
+    renderPasteOut();
+  });
+}
+function pasteSave(){
+  var p = ui.paste; if(!p || !p.client) return;
+  var c = p.client; if(!c.name) c.name = 'LINE 客人 ' + fmtTs(Date.now());
+  c.stage = missingOf(c).length ? '資料蒐集中' : '待推薦';
+  if(p.summary) c.log.push({ t: Date.now(), text: '對話摘要：' + p.summary });
+  S.clients.unshift(c); save(); ui.paste = null; ui.tab = 'clients'; render(); openDetail(c.id); toast('已存進客戶簿');
+}
+function pasteMerge(id){
+  var p = ui.paste; var c = getClient(id); if(!p || !p.client || !c) return;
+  var n = 0; FIELDS.forEach(function(f){ if(!val(c, f.k) && val(p.client, f.k)){ c.fields[f.k] = val(p.client, f.k); n++; } });
+  if(!c.moveInDate && p.client.moveInDate) c.moveInDate = p.client.moveInDate;
+  if(!c.leaseEnd && p.client.leaseEnd) c.leaseEnd = p.client.leaseEnd;
+  if(p.client.student) c.student = true; if(p.client.subsidy) c.subsidy = true;
+  c.log.push({ t: Date.now(), text: '貼上對話補了 ' + n + ' 個欄位' + (p.summary ? '：' + p.summary : '') });
+  touch(c); ui.paste = null; ui.tab = 'clients'; render(); openDetail(c.id); toast('補進 ' + n + ' 個欄位');
+}
+
+/* reminders */
+function viewRemind(){
+  var items = computeReminders(); var A = computeAliases();
+  return '<h1 class="tab-title">提醒</h1><p class="fine" style="max-width:48em">依你的規則算出來的待辦：租約到期前 10 天（學生或需租補 15 天）、今明兩天的帶看、AI 轉交的問題、還沒問清楚的條件，和 3 天沒更新的客人。</p>' +
+    (items.length ? '<div class="rlist">' + items.map(function(r){
+      return '<div class="ritem' + (r.lv === 0 ? ' urgent' : '') + '"><span class="rdate">' + esc(r.date) + '</span><div><div class="rtext">' + esc(r.text) + '</div><div class="rwhy">' + esc(r.why) + '</div></div><button class="btn small ghost" data-act="open-client" data-v="' + r.cid + '">打開客戶卡</button></div>';
+    }).join('') + '</div>' : '<div class="blank" style="margin-top:1rem"><p class="t">目前沒有要處理的事。</p><p>客人填了租約到期日、排了約看，提醒就會出現在這裡。</p></div>');
+}
+
+/* settings */
+function viewSettings(){
+  return '<h1 class="tab-title">設定</h1>' +
+    '<section class="paper set" aria-labelledby="s1"><h2 id="s1">個人資料</h2>' + profileFields(S.profile) + '<p class="err" id="pf-err" hidden></p><div class="cta-row"><button class="btn primary" data-act="save-profile">儲存個人資料</button></div></section>' +
+    '<section class="paper set" aria-labelledby="s2"><h2 id="s2">AI 知識庫</h2><p class="fine">AI 只用這裡寫的內容回答客人。一行「問：」接一行「答：」。現在標「（示範）」的內容，請改成你自己的規定。</p><label class="sr" for="kbIn">知識庫內容</label><textarea id="kbIn" class="inp" rows="12">' + esc(S.kb) + '</textarea><div class="cta-row"><button class="btn primary" data-act="save-kb">儲存知識庫</button><button class="btn ghost" data-act="reset-kb">還原成示範內容</button></div></section>' +
+    '<section class="paper set" aria-labelledby="s3"><h2 id="s3">資料</h2><p class="fine">原型階段，所有資料只存在這台裝置的瀏覽器。換手機或清除瀏覽器資料就會不見，重要的先匯出備份。</p><div class="cta-row"><button class="btn ghost" data-act="load-demo">放入示範客戶</button><button class="btn ghost" data-act="export" id="exportBtn" hidden>匯出備份（JSON）</button><button class="btn danger" data-act="clear-all">清除所有資料</button></div></section>';
+}
+function checkDownloads(){
+  if(!window.claude || typeof window.claude.use !== 'function') return;
+  window.claude.use('downloads').then(function(dl){ var b = $('#exportBtn'); if(b && dl) b.hidden = false; }).catch(function(){});
+}
+function exportData(){
+  window.claude.use('downloads').then(function(dl){
+    if(!dl){ toast('這個畫面不能下載檔案'); return; }
+    return dl.save({ filename:'房客簿備份-' + todayStr() + '.json', data: JSON.stringify(S, null, 2) })
+      .then(function(){ toast('已匯出備份'); })
+      .catch(function(e){ if(e && e.code === 'declined') return; toast('匯出沒有完成，稍後再試'); });
+  }).catch(function(){ toast('這個畫面不能下載檔案'); });
+}
+
+/* demo data (all fictional) */
+function loadDemo(){
+  var t = todayStr(), now = Date.now();
+  S.clients = S.clients.filter(function(c){ return c.source !== '示範'; });
+  function mk(o){ return newClient(Object.assign({ source:'示範' }, o)); }
+  var list = [
+    mk({ name:'小林', stage:'資料蒐集中', student:true, leaseEnd:addDays(t,13), updatedAt:now-DAY, fields:{ people:'1 人', moveIn:'下個月初', job:'學生', smoke:'無', pet:'無', phone:'0900-000-101', gender:'女', age:'20 歲', area:'北區、中國醫藥大學', budget:'7500', transport:'機車', commute:'10 分鐘' } }),
+    mk({ name:'陳小姐', stage:'已約看', moveInDate:addDays(t,8), updatedAt:now, fields:{ people:'1 人', moveIn:fmtMD(addDays(t,8)), job:'上班族', smoke:'無', pet:'一隻貓', phone:'0900-000-102', gender:'女', age:'28 歲', area:'西屯', budget:'12000', transport:'機車', commute:'15 分鐘' }, viewings:[{ id:uid('v'), when:addDays(t,1)+'T19:00', address:'西屯示範路 88 號 5F' }] }),
+    mk({ name:'Andy', stage:'已約看', moveInDate:addDays(t,5), updatedAt:now-2*DAY, fields:{ people:'1 人', moveIn:fmtMD(addDays(t,5)), job:'工程師', smoke:'有', pet:'無', phone:'', gender:'男', age:'31 歲', area:'大雅、中科', budget:'9000', transport:'汽車', commute:'10 分鐘' }, viewings:[{ id:uid('v'), when:t+'T20:30', address:'大雅示範街 5 號 2F' }] }),
+    mk({ name:'王先生', stage:'斡旋中', updatedAt:now, fields:{ people:'2 人', moveIn:'月底', job:'業務', smoke:'無', pet:'無', phone:'0900-000-104', gender:'男', age:'35 歲', area:'北屯', budget:'15000', transport:'汽車', commute:'' } }),
+    mk({ name:'學生妹', stage:'資料蒐集中', student:true, updatedAt:now-4*DAY, fields:{ people:'1 人', moveIn:'', job:'學生', smoke:'', pet:'', phone:'', gender:'女', age:'20 歲', area:'學校附近', budget:'8500', transport:'機車', commute:'' } }),
+    mk({ name:'阿哲', stage:'待推薦', updatedAt:now-DAY, fields:{ people:'1 人', moveIn:'下週', job:'工程師', smoke:'無', pet:'無', phone:'0900-000-106', gender:'男', age:'27 歲', area:'北區', budget:'8000', transport:'機車', commute:'20 分鐘' } }),
+    mk({ name:'小芸', stage:'新詢問', updatedAt:now, handoff:'租金可以便宜一點嗎', fields:{ people:'1 人', moveIn:'', job:'護理師', smoke:'無', pet:'', phone:'0900-000-107', gender:'女', age:'', area:'北區', budget:'8000', transport:'', commute:'' } }),
+    mk({ name:'Leo', stage:'新詢問', moveInDate:addDays(t,45), updatedAt:now, fields:{ people:'2 人', moveIn:fmtMD(addDays(t,45)), job:'上班族', smoke:'無', pet:'一隻狗', phone:'0900-000-109', gender:'男', age:'29 歲', area:'南區', budget:'14000', transport:'機車', commute:'' } }),
+    mk({ name:'郭先生', stage:'已成交', updatedAt:now-6*DAY, fields:{ people:'1 人', moveIn:'已入住', job:'上班族', smoke:'無', pet:'無', phone:'0900-000-108', gender:'男', age:'40 歲', area:'南屯', budget:'10000', transport:'汽車', commute:'25 分鐘' } })
+  ];
+  S.clients = list.concat(S.clients); save();
+}
+
+/* ---------- render ---------- */
+function rerenderTab(){ var m = document.querySelector('.app-main'); if(!m){ render(); return; } render(); }
+function render(){
+  var app = $('#app');
+  if(ui.view === 'landing'){ app.innerHTML = viewLanding(); requestAnimationFrame(function(){ requestAnimationFrame(playHero); }); }
+  else if(ui.view === 'signup'){ app.innerHTML = viewSignup(); var n = $('#pf-name'); if(n) n.focus(); }
+  else {
+    app.innerHTML = viewApp();
+    if(ui.tab === 'bot'){ renderChat(); renderLive(); updateModePill(); checkAI(); }
+    if(ui.tab === 'settings') checkDownloads();
+  }
+}
+function go(view, tab){
+  if(ui.openId) closeDetail();
+  ui.view = view; if(tab) ui.tab = tab; render(); window.scrollTo(0,0);
+}
+
+/* ---------- events ---------- */
+var ACT = {
+  home: function(){ go('landing'); },
+  enter: function(){ go('app'); },
+  signup: function(){ go('signup'); },
+  replay: function(){ playHero(); },
+  'do-signup': function(){
+    var p = readProfile(); var err = $('#su-err');
+    if(!p.name){ err.textContent = '請填你的名字，AI 回覆客人時會用到。'; err.hidden = false; $('#pf-name').focus(); return; }
+    S.profile = p; if($('#su-demo').checked) loadDemo(); save(); ui.bot = null; go('app', 'clients');
+    toast('後台建好了，' + p.name);
+  },
+  tab: function(el){ if(ui.openId) closeDetail(); ui.tab = el.getAttribute('data-v'); if(ui.view !== 'app') ui.view = 'app'; render(); window.scrollTo(0,0); },
+  filter: function(el){ ui.filter = el.getAttribute('data-v'); render(); },
+  layout: function(el){ ui.layout = el.getAttribute('data-v'); render(); },
+  'add-client': function(){ var c = newClient({ source:'手動' }); S.clients.unshift(c); save(); refreshList(); openDetail(c.id); var n = $('#d-name'); if(n) n.focus(); },
+  'open-client': function(el){ openDetail(el.getAttribute('data-v')); },
+  'close-detail': function(){ closeDetail(); },
+  'clear-handoff': function(){ var c = getClient(ui.openId); if(!c) return; c.log.push({ t:Date.now(), text:'已回覆 AI 轉交的問題：' + c.handoff }); c.handoff = ''; touch(c); openDetail(c.id); refreshBadge(); },
+  'add-viewing': function(){
+    var c = getClient(ui.openId); if(!c) return;
+    var w = $('#vWhen').value, a = $('#vAddr').value.trim();
+    if(!w || !a){ toast('約看要填日期時間和物件地址'); return; }
+    c.viewings.push({ id:uid('v'), when:w, address:a });
+    c.log.push({ t:Date.now(), text:'排約看：' + fmtWhen(w) + ' ' + a });
+    if(['新詢問','資料蒐集中','待推薦'].indexOf(c.stage) >= 0){ c.stage = '已約看'; var sel = $('#d-stage'); if(sel) sel.value = '已約看'; }
+    touch(c); $('#vWhen').value = ''; $('#vAddr').value = ''; refreshDetailBits(c); refreshList();
+    if(!val(c,'phone')) toast('記得跟客人要電話，再寫進第 6 項');
+  },
+  'del-viewing': function(el){ var c = getClient(ui.openId); if(!c) return; var id = el.getAttribute('data-v'); c.viewings = c.viewings.filter(function(v){ return v.id !== id; }); touch(c); refreshDetailBits(c); refreshList(); },
+  'add-log': function(){ var c = getClient(ui.openId); var box = $('#logIn'); if(!c || !box.value.trim()) return; c.log.push({ t:Date.now(), text:box.value.trim() }); box.value = ''; touch(c); refreshDetailBits(c); refreshList(); },
+  'delete-client': function(el){
+    if(el.getAttribute('data-armed') !== '1'){ el.setAttribute('data-armed','1'); el.textContent = '再按一次，確定刪除'; setTimeout(function(){ if(el.isConnected){ el.removeAttribute('data-armed'); el.textContent = '刪除這位客戶'; } }, 4000); return; }
+    S.clients = S.clients.filter(function(c){ return c.id !== ui.openId; }); save(); closeDetail(); toast('已刪除');
+  },
+  send: function(){ sendChat(); },
+  chip: function(el){ sendChat(el.getAttribute('data-v')); },
+  'bot-save': function(){ botSave(); },
+  'bot-reset': function(){ if(ui.bot && ui.bot.ctl) ui.bot.ctl.abort(); ui.bot = freshBot(); renderChat(); renderLive(); },
+  'paste-run': function(){ runPaste(); },
+  'paste-example': function(){ var b = $('#pasteIn'); if(b){ b.value = PASTE_EXAMPLE; b.focus(); } },
+  'paste-save': function(){ pasteSave(); },
+  'paste-merge': function(el){ pasteMerge(el.getAttribute('data-v')); },
+  'save-profile': function(){ var p = readProfile(); var err = $('#pf-err'); if(!p.name){ err.textContent = '名字不能空白。'; err.hidden = false; return; } S.profile = p; save(); err.hidden = true; toast('已儲存個人資料'); },
+  'save-kb': function(){ S.kb = $('#kbIn').value; save(); toast('已儲存知識庫'); },
+  'reset-kb': function(){ S.kb = DEFAULT_KB; save(); $('#kbIn').value = DEFAULT_KB; toast('已還原成示範內容'); },
+  'load-demo': function(){ loadDemo(); toast('已放入 9 位示範客戶'); if(ui.tab !== 'clients'){ ui.tab = 'clients'; } render(); },
+  export: function(){ exportData(); },
+  'clear-all': function(el){
+    if(el.getAttribute('data-armed') !== '1'){ el.setAttribute('data-armed','1'); el.textContent = '再按一次，清除全部'; setTimeout(function(){ if(el.isConnected){ el.removeAttribute('data-armed'); el.textContent = '清除所有資料'; } }, 4000); return; }
+    S = { profile:null, kb:DEFAULT_KB, clients:[] }; save(); ui.bot = null; ui.paste = null; go('landing'); toast('資料已清除');
+  }
+};
+document.addEventListener('click', function(e){
+  var el = e.target.closest('[data-act]'); if(!el) return;
+  var fn = ACT[el.getAttribute('data-act')]; if(fn){ e.preventDefault(); fn(el, e); }
+});
+document.addEventListener('input', function(e){
+  var el = e.target;
+  if(el.getAttribute && el.getAttribute('data-bind') === 'q'){ ui.q = el.value; refreshList(); }
+  if(el.id === 'chatIn'){ el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+});
+document.addEventListener('change', function(e){
+  var el = e.target; var c = ui.openId ? getClient(ui.openId) : null; if(!c) return;
+  var ff = el.getAttribute('data-ff'), cf = el.getAttribute('data-cf');
+  if(ff){
+    c.fields[ff] = el.value.trim(); el.classList.toggle('empty', !el.value.trim());
+    if(ff === 'job' && /學生/.test(c.fields.job)){ c.student = true; var cb = document.querySelector('[data-cf="student"]'); if(cb) cb.checked = true; }
+    if(ff === 'phone'){ var d = findByPhone(c.fields.phone, c.id); if(d) toast('「' + displayName(computeAliases()[d.id]) + '」也是這支電話，可能是同一位客人'); }
+  } else if(cf){
+    if(cf === 'student' || cf === 'subsidy') c[cf] = el.checked;
+    else if(cf === 'stage'){ var old = c.stage; c.stage = el.value; if(old !== c.stage) c.log.push({ t:Date.now(), text:'階段：' + old + ' → ' + c.stage }); }
+    else c[cf] = el.value.trim();
+  } else return;
+  touch(c); refreshDetailBits(c); refreshList();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && ui.openId){ closeDetail(); return; }
+  if(e.target && e.target.id === 'chatIn' && e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229){ e.preventDefault(); sendChat(); }
+});
+
+render();
+})();
+</script>
+</body>
+</html>

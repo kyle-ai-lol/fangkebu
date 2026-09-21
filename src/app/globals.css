@@ -1,0 +1,38 @@
+/* 階段 0 的最小樣式；階段 1 會換成原型（reference/prototype.html）的整套 CSS。 */
+:root {
+  --paper: #f2f5f1;
+  --ink: #1b2b45;
+  --ink-2: #51607a;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131c2c;
+    --ink: #e4eae6;
+    --ink-2: #a5b1c0;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  line-height: 1.7;
+}
+
+.placeholder {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}
+
+.placeholder p {
+  color: var(--ink-2);
+}
