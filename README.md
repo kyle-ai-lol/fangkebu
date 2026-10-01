@@ -31,6 +31,8 @@
 | `SCREENS=1 npx playwright test screens` | 電腦／手機 × 淺色／深色截圖，存到 `test-results/screens/` |
 | `npm run lint`、`npm run typecheck` | 程式碼檢查 |
 
+已知問題：本機 Supabase（CLI 2.117）內建的 PostgREST v16.2 閒置超過 30 秒後，偶爾會把剛登入的憑證誤判成 `PGRST303: JWT issued at future`（官方在 v16.3 修掉）。症狀是註冊或登入後第一頁出現「讀取客戶簿失敗（PGRST303）」，或 `test:db`、`test:e2e` 偶發失敗。遇到時先跑 `docker restart supabase_rest_fangkebu` 再重試；`src/lib/data/retry.ts` 的重試只能減輕，根治要升級本機 Supabase。
+
 測試不會真的打 Anthropic API，就算 `.env.local` 有金鑰也一樣：
 
 - 單元測試的 AI 呼叫都是假的；`tests/setup/no-real-ai.ts` 另外擋下所有連到 anthropic.com 的請求，漏了 mock 也送不出去。
