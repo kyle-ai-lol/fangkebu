@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import type { TablesUpdate } from "@/lib/db/database.types";
 import { FIELD_COLUMN, toClient } from "@/lib/db/mappers";
 import { replaceDemoClients } from "@/lib/data/demo-insert";
-import { computeAliases, displayName, isStudentJob, onViewingAdded, todayInTaipei } from "@/lib/rules";
+import { logRows } from "@/lib/data/log-rows";
+import { computeAliases, displayName, findSamePhone, isStudentJob, onViewingAdded, samePhone, todayInTaipei } from "@/lib/rules";
 import { createClient, currentUserId } from "@/lib/supabase/server";
 import { fieldUpdateSchema, firstError, idSchema, logSchema, metaUpdateSchema, viewingSchema } from "@/lib/validation";
 
@@ -35,12 +36,6 @@ async function touch(supabase: Awaited<ReturnType<typeof createClient>>, clientI
   await supabase.from("clients").update({ updated_at: new Date().toISOString() }).eq("id", clientId);
 }
 
-/** 同時寫好幾筆紀錄時，時間錯開 1 毫秒，列表順序才固定 */
-function logRows(agentId: string, clientId: string, texts: string[]) {
-  const base = Date.now();
-  return texts.map((text, i) => ({ agent_id: agentId, client_id: clientId, text, created_at: new Date(base + i).toISOString() }));
-}
-
 export async function newClientAction(): Promise<void> {
   const { supabase, userId } = await session();
   const { data, error } = await supabase.from("clients").insert({ agent_id: userId, source: "手動" }).select("id").single();
@@ -62,11 +57,11 @@ export async function updateFieldAction(input: { clientId: string; key: string; 
   if (error) return failed("儲存", error.code);
 
   let message: string | undefined;
-  const digits = value.replace(/\D/g, "");
-  if (key === "phone" && digits.length >= 8) {
+  // samePhone(value, value)：號碼夠長（至少 8 碼）才去查有沒有人用同一支
+  if (key === "phone" && samePhone(value, value)) {
     const { data: rows } = await supabase.from("clients").select("*");
     const all = (rows ?? []).map(toClient);
-    const dup = all.find((c) => c.id !== clientId && String(c.fields.phone ?? "").replace(/\D/g, "") === digits);
+    const [dup] = findSamePhone(all, value, clientId);
     if (dup) message = `「${displayName(computeAliases(all, todayInTaipei()).get(dup.id))}」也是這支電話，可能是同一位客人`;
   }
   return done(message);

@@ -1,33 +1,9 @@
 // 多租戶測試：A 房仲的資料，B 房仲讀不到、改不到、刪不到，也掛不上去。
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import type { Database } from "../../src/lib/db/database.types";
+import { admin, anonClient, deleteTestAgents, signUpAgent, type TestAgent } from "./helpers";
 
-type Db = SupabaseClient<Database>;
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-const secretKey = process.env.SUPABASE_SECRET_KEY!;
-const noSession = { auth: { persistSession: false, autoRefreshToken: false } };
-
-const admin: Db = createClient<Database>(url, secretKey, noSession);
-const run = crypto.randomUUID().slice(0, 8);
-const password = "rls-test-password-1";
-const createdUsers: string[] = [];
-
-async function signUpAgent(label: string, metadata: Record<string, unknown> = { name: `測試房仲${label}` }) {
-  const email = `rls-${label}-${run}@example.test`;
-  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: metadata });
-  if (error) throw error;
-  createdUsers.push(data.user.id);
-  const db: Db = createClient<Database>(url, publishableKey, noSession);
-  const { error: signInError } = await db.auth.signInWithPassword({ email, password });
-  if (signInError) throw signInError;
-  return { id: data.user.id, db };
-}
-
-let A: Awaited<ReturnType<typeof signUpAgent>>;
-let B: Awaited<ReturnType<typeof signUpAgent>>;
+let A: TestAgent;
+let B: TestAgent;
 let aClientId: string;
 
 beforeAll(async () => {
@@ -45,9 +21,7 @@ beforeAll(async () => {
   if (log.error || viewing.error) throw log.error ?? viewing.error;
 });
 
-afterAll(async () => {
-  for (const id of createdUsers) await admin.auth.admin.deleteUser(id);
-});
+afterAll(deleteTestAgents);
 
 describe("註冊", () => {
   test("註冊後自動建立房仲資料，而且只看得到自己的", async () => {
@@ -123,7 +97,7 @@ describe("B 房仲碰不到 A 房仲的資料", () => {
 
 describe("沒登入", () => {
   test("什麼都讀不到", async () => {
-    const anon: Db = createClient<Database>(url, publishableKey, noSession);
+    const anon = anonClient();
     for (const table of ["agents", "clients", "client_logs", "viewings"] as const) {
       const { data } = await anon.from(table).select("id");
       expect(data ?? [], table).toEqual([]);

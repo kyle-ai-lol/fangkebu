@@ -5,5 +5,7 @@ export * from "./client";
 export * from "./dates";
 export * from "./districts";
 export * from "./extract";
+export * from "./paste";
+export * from "./phone";
 export * from "./reminders";
 export * from "./viewing";

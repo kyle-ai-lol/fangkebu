@@ -1,5 +1,5 @@
 "use client";
-// 後台上方列：分頁、提醒數字、登出。「AI 接客測試」「整理對話」到階段 2、3 才加。
+// 後台上方列：分頁、提醒數字、登出。「AI 接客測試」到階段 3 才加。
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,6 +8,7 @@ import { signOut } from "@/lib/actions/auth";
 
 const TABS = [
   ["/app/clients", "客戶簿"],
+  ["/app/paste", "整理對話"],
   ["/app/reminders", "提醒"],
   ["/app/settings", "設定"],
 ] as const;

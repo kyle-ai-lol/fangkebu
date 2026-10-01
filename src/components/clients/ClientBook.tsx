@@ -88,9 +88,10 @@ export function ClientBook({ items }: { items: BookItem[] }) {
       {items.length === 0 ? (
         <div className="blank">
           <p className="t">客戶簿還是空的。</p>
-          <p>按「新增客戶」建立第一張客戶卡，或先放入示範客戶看看。</p>
+          <p>按「新增客戶」建立第一張客戶卡，或把一段 LINE 對話貼進來整理；也可以先放入示範客戶看看。</p>
           <div className="cta-row">
             <NewClientButton />
+            <Link className="btn ghost" href="/app/paste">貼上 LINE 對話</Link>
             <LoadDemoButton />
           </div>
         </div>

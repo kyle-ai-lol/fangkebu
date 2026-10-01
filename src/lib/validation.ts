@@ -1,6 +1,6 @@
 // 所有寫進資料庫的資料都先過這裡（zod）。錯誤訊息直接顯示給房仲看。
 import { z } from "zod";
-import { DISTRICTS, districtShort, FIELD_DEFS, isYmd, STAGES } from "./rules";
+import { DISTRICTS, districtShort, FIELD_DEFS, isYmd, PASTE_MAX, PASTE_TOO_LONG, STAGES } from "./rules";
 
 const AREA_OPTIONS = DISTRICTS.map(districtShort) as [string, ...string[]];
 const FIELD_KEYS = FIELD_DEFS.map((f) => f.key) as [(typeof FIELD_DEFS)[number]["key"], ...(typeof FIELD_DEFS)[number]["key"][]];
@@ -61,6 +61,30 @@ export const viewingSchema = z.object({
 export const logSchema = z.object({
   clientId: idSchema,
   text: text(2000).min(1, "紀錄不能空白"),
+});
+
+export const pasteTextSchema = z.string().trim().min(1, "先貼上一段對話").max(PASTE_MAX, PASTE_TOO_LONG);
+
+const ymdOrNull = z
+  .string()
+  .nullable()
+  .refine((s) => s === null || isYmd(s), "日期格式不對");
+
+/** 整理結果存進客戶簿前再驗一次：草稿是從瀏覽器傳回來的，不能直接相信 */
+export const pasteDraftSchema = z.object({
+  name: text(40),
+  fields: z.object(Object.fromEntries(FIELD_KEYS.map((k) => [k, text(100)])) as Record<(typeof FIELD_KEYS)[number], ReturnType<typeof text>>),
+  moveInDate: ymdOrNull,
+  leaseEnd: ymdOrNull,
+  isStudent: z.boolean(),
+  needsSubsidy: z.boolean(),
+  summary: text(200),
+});
+
+export const pasteSaveSchema = z.object({
+  draft: pasteDraftSchema,
+  /** 要補進哪一位舊客戶；不給就是存成新客戶 */
+  mergeInto: idSchema.optional(),
 });
 
 /** zod 錯誤 → 第一則訊息 */

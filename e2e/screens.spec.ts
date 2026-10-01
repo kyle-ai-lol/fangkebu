@@ -46,6 +46,22 @@ for (const scheme of ["light", "dark"] as const) {
       await noHorizontalScroll(page, "提醒");
       await shot("reminders");
 
+      await page.goto("/app/paste");
+      // 規則模式才送出對話（不會呼叫 AI）；伺服器帶著 AI 金鑰時只截空白頁
+      if ((await page.locator(".toolbar .pill").textContent()) === "目前為規則模式") {
+        await page.getByRole("button", { name: "貼上示範對話" }).click();
+        await page.getByRole("button", { name: "整理成客戶卡" }).click();
+        await expect(page.getByRole("heading", { name: "整理結果（規則模式）" })).toBeVisible();
+        await noHorizontalScroll(page, "整理對話");
+        await shot("paste");
+        // 和示範客戶「小芸」同一支電話 → 出現補進舊客戶卡的按鈕
+        await page.getByLabel("LINE 對話紀錄").fill("小芸：想找北區 8000 左右的套房\n小芸：電話 0900-000-107，我一個人住，沒有養寵物");
+        await page.getByRole("button", { name: "整理成客戶卡" }).click();
+        await expect(page.getByRole("button", { name: /^補進/ })).toBeVisible();
+      }
+      await noHorizontalScroll(page, "整理對話（同電話）");
+      await shot("paste-merge");
+
       await page.goto("/app/settings");
       await noHorizontalScroll(page, "設定");
       await shot("settings", false);
